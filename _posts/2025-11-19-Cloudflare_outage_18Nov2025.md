@@ -1,9 +1,11 @@
 # Cloudflare Outage 2025-11-18
 
+This article is also published on [LinkedIn](https://www.linkedin.com/posts/shubham-raizada_cloudflare-outage-on-november-18-2025-activity-7396889475320242176-Jlxs?utm_source=share&utm_medium=member_desktop&rcm=ACoAABJVSgcBaThXKvKVt-0GEAwQrrvaMKqorMs)
+
 I was reading the Cloudflare outage blog and thought I’d jot down what stood out to me.
 
 The issue started when Cloudflare switched from using a single system account for database access to
-giving each user their own account. The idea was to - "improve security and reliability, so each user
+giving each user their own account. The idea was to "improve security and reliability so that each user
 could have their own query limits and access grants, and one bad subquery wouldn’t mess things up
 for everyone else."
 
