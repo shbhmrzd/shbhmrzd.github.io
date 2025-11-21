@@ -1,4 +1,7 @@
-# How does kafka scale for log processing ?
+# How does Kafka scale for log processing?
+
+This article is also published on [LinkedIn](https://www.linkedin.com/posts/shubham-raizada_netdb-2011-activity-7397681575234170880-qyb8?utm_source=share&utm_medium=member_desktop&rcm=ACoAABJVSgcBaThXKvKVt-0GEAwQrrvaMKqorMs)
+
 I recently went back to reading the original Kafka white paper from 2010.
 
 At the time, other existing messaging solutions like IBM WebSphere MQ had transactional support that allowed an 
