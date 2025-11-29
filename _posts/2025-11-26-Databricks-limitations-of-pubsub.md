@@ -1,3 +1,5 @@
+![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2F2025%2F11%2F26%2FDatabricks-limitations-of-pubsub.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
+
 # When Pub/Sub Is Not Enough: Thoughts on the Databricks Paper, Using Kafka as a Foil
 
 A few months back, Databricks published a paper titled [“Understanding the limitations of pubsub systems”](https://sigops.org/s/conferences/hotos/2025/papers/hotos25-426.pdf).
