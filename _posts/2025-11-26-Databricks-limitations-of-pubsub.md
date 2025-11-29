@@ -87,4 +87,4 @@ actually existed at the source and provides clear semantics for lag and resynchr
 
 Some workloads are about moving immutable events as fast as possible, others are about consistently mirroring state.
 One tool cannot fit all use cases. 
-The right answer, as usual, is **"Know our requirements"**.
+The right answer, as usual, is **"Know thy requirements"**.
