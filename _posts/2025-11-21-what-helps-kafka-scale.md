@@ -1,3 +1,4 @@
+![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2F2025%2F11%2F22%2Fkafka-connect-101.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
 # How does Kafka scale for log processing?
 
 This article is also published on [LinkedIn](https://www.linkedin.com/posts/shubham-raizada_netdb-2011-activity-7397681575234170880-qyb8?utm_source=share&utm_medium=member_desktop&rcm=ACoAABJVSgcBaThXKvKVt-0GEAwQrrvaMKqorMs)
