@@ -15,7 +15,7 @@ the traditional pub/sub model remains the right tool for workloads of high-volum
 
 ## What the Paper Gets Right: Real Kafka Limitations
 
-### Partition Count Is an Exposed Implementation Detail That Bites
+### 1. Partition Count Is an Exposed Implementation Detail That Bites
 Kafka scales consumer groups by partitioning. The maximum parallelism of a consumer group is bounded by the number of 
 partitions. Once you have 10,000 partitions, you can’t easily reduce them, and you’re stuck with that upper bound forever.
 You cannot have dynamically sharded consumers that own arbitrary key ranges independently of partition boundaries. 
