@@ -6,6 +6,8 @@ categories: [distributed-systems, algorithms, databases]
 tags: [merkle-trees, dynamodb, consistency, replication]
 ---
 
+![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fdistributed-systems%2Falgorithms%2Fdatabases%2F2025%2F12%2F03%2FMerkle-trees-for-replica-consistency.html&label=&icon=github&color=%23198754&message=&style=flat&tz=UTC)
+
 # Merkle Trees: Efficient Replica Consistency Detection in Distributed Systems
 
 When building distributed storage systems that prioritize availability over consistency, one of the fundamental challenges
