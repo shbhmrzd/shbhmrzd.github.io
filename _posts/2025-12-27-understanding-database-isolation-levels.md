@@ -269,7 +269,7 @@ However, MVCC requires garbage collection of old versions and can use more stora
 
 ACID properties ensure reliable transactions, with isolation being crucial for concurrent access. There's a trade-off between strict isolation (fewer anomalies) and performance (higher concurrency). The four isolation levels offer different guarantees from weakest to strongest.
 
-Choose based on your workload. Specific items like seats can use strong isolation with row locks. High-volume counters often need weaker isolation for performance. Implementation matters too—MVCC provides better concurrency than traditional locking.
+Choose based on your workload. Specific items like seats can use strong isolation with row locks. High-volume counters often need weaker isolation for performance. Implementation matters too, MVCC provides better concurrency than traditional locking.
 
 ## Sources
 
