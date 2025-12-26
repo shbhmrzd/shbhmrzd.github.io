@@ -99,7 +99,9 @@ You only read committed data. No dirty reads allowed. This is the default in Pos
 
 **Use cases:** Most general-purpose applications, e-commerce browsing, social media feeds, any scenario where seeing committed data is sufficient.
 
-**Example:** Consider browsing products on an e-commerce site. You're looking at a laptop priced at $999. While you read reviews and specifications (all within a single page load transaction), the price gets updated to $1099 by another transaction that commits. When you click "Add to Cart," you see the new price $1099.
+**Example:** Consider browsing products on an e-commerce site. You're looking at a laptop priced at $999.
+While you read reviews and specifications (all within a single page load transaction), the price gets updated to $1099
+by another transaction that commits. When you click "Add to Cart," you see the new price $1099.
 
 This is perfectly fine because:
 - You never saw uncommitted data (no dirty read) - the price you initially saw was committed
@@ -107,7 +109,8 @@ This is perfectly fine because:
 - When you actually commit to buying (add to cart), you see the current committed price
 - Each individual read sees a consistent, committed state of the database
 
-Read Committed prevents the serious problem of seeing data that might never exist (dirty reads), while allowing good concurrency. For most web applications, this is the sweet spot, you always see real committed data, but you don't lock everything down so much that performance suffers.
+Read Committed prevents the serious problem of seeing data that might never exist (dirty reads), while allowing good concurrency. For most web applications,
+this is the sweet spot, you always see real committed data, but you don't lock everything down so much that performance suffers.
 
 **Implementation:** 
 - **Locking approach:** Exclusive locks (X-locks) on writes are held until transaction commits. Shared locks (S-locks) on reads are acquired but released immediately after reading each row, not held until commit.
