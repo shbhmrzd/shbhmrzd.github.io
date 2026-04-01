@@ -933,5 +933,4 @@ A few observations from this comparison:
 - [Java Garbage Collection: The G1 Garbage Collector](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html)
 - [ZGC: The Z Garbage Collector - JEP 333](https://openjdk.org/jeps/333)
 - [Generational ZGC - JEP 439](https://openjdk.org/jeps/439)
-- [Design of CPython's Garbage Collector](https://devguide.python.org/internals/garbage-collector/)
 - [PEP 442: Safe object finalization](https://peps.python.org/pep-0442/)
