@@ -916,7 +916,7 @@ A few observations from this comparison:
 
 **ZGC's colored pointers are a modern implementation of Wilson's pointer-tagging idea.** Wilson mentions using bits in pointers for GC metadata. ZGC takes this further by embedding mark state, remap state, and finalization state directly into the 64-bit pointer. The load barrier that checks these bits on every pointer load is the price ZGC pays for sub-millisecond pauses.
 
-**The fundamental problem has not changed.** Tracing from roots, marking what is alive, reclaiming the rest. Everything since 1960 is an engineering refinement of McCarthy's original insight.
+**The fundamental problem has not changed.** Tracing from roots, marking what is alive, reclaiming the rest. That is still the algorithm. Sixty years of research has made it  faster, concurrent, and more memory-efficient, but the core idea is the same.
 
 ---
 
