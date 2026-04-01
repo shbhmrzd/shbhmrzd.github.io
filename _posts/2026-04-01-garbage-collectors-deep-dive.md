@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Garbage Collection: From First Principles to Modern Collectors in Java, Go, and Python"
+title: "Garbage Collection: From First Principles to Modern Collectors in Java, Go and Python"
 date: 2026-04-01
 categories: [systems, garbage-collection, memory-management]
 tags: [gc, java, go, python, mark-and-sweep, reference-counting, g1gc, zgc, memory-management]
@@ -8,18 +8,18 @@ tags: [gc, java, go, python, mark-and-sweep, reference-counting, g1gc, zgc, memo
 
 ![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fsystems%2Fgarbage-collection%2Fmemory-management%2F2026%2F04%2F01%2Fgarbage-collectors-deep-dive.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
 
-# Garbage Collection: From First Principles to Modern Collectors in Java, Go, and Python
+# Garbage Collection: From First Principles to Modern Collectors in Java, Go and Python
 
 Over the last few years I have gone from Java to Go to Rust and now back to Java. The one thing that keeps coming up when
 switching between these languages is garbage collection. Java and Go have it, Rust does not. In benchmarks, in latency discussions,
-in "why is this service slow" conversations, GC is always somewhere in the picture. I kept hearing about GC pauses, throughput overhead,
+in "why is this service slow" conversations, GC is always somewhere in the picture. I kept hearing about GC pauses, throughput overhead
 and write barriers, but I did not completely understand what was happening underneath.
 
 
 While looking for the origins I came across McCarthy's 1960 paper, which is famous for introducing Lisp but also happens
 to be where mark-and-sweep was first described. That led me to Wilson's 1992 survey, "Uniprocessor Garbage Collection Techniques",
 which organizes everything that followed into a clean taxonomy. Reading both made the modern collectors much easier to understand,
-because G1GC, ZGC, Go's concurrent collector, and CPython's hybrid approach are all variations on ideas those papers describe.
+because G1GC, ZGC, Go's concurrent collector and CPython's hybrid approach are all variations on ideas those papers describe.
 I also wrote a toy GC in Go to see the mechanics for myself.
 
 These are my notes from that process.
@@ -37,13 +37,13 @@ recursive structure made it impractical to ask programmers to free memory manual
 The mechanism is two phases. First, start from the root variables the program is actively using and traverse every object
 they reference, flagging each one as reachable. Second, scan all of memory. Anything not flagged is garbage. Add it back to the free list.
 
-That is mark-and-sweep. It handles cycles naturally (unreachable cycles never get flagged), requires no per-object bookkeeping,
+That is mark-and-sweep. It handles cycles naturally (unreachable cycles never get flagged), requires no per-object bookkeeping
 and lets the programmer ignore memory entirely.
 
 The cost was that the program had to stop completely while the collector ran. Every allocation, every computation, everything
 froze until the mark and sweep finished. For the programs McCarthy was writing in 1960, this was perfectly reasonable. As programs grew
 larger and moved into latency-sensitive environments like web servers handling thousands of requests per second, stopping the world became
-a harder tradeoff to accept. Most of what modern GC research has produced is the answer to one question:
+a harder tradeoff to accept. Most of what modern GC research has produced is the answer to one question: how do you collect garbage without stopping the world?
 
 ### Wilson (1992): Uniprocessor Garbage Collection Techniques
 
@@ -52,11 +52,11 @@ that organized it all. It is not a new algorithm. It is a taxonomy that gives na
 
 Wilson formalizes the three classic algorithms that everything else is built on.
 
-The first is mark-and-sweep, which is McCarthy's original algorithm. Start from the roots, walk the object graph, mark everything you can reach, then sweep through the heap and free anything unmarked. It handles cycles naturally and the implementation is straightforward. The downside is that after enough cycles of allocation and collection, the heap gets fragmented. Live objects end up scattered with small free gaps between them, and the allocator has to search harder to find space.
+The first is mark-and-sweep, which is McCarthy's original algorithm. Start from the roots, walk the object graph, mark everything you can reach, then sweep through the heap and free anything unmarked. It handles cycles naturally and the implementation is straightforward. The downside is that after enough cycles of allocation and collection, the heap gets fragmented. Live objects end up scattered with small free gaps between them and the allocator has to search harder to find space.
 
 The second is copying, sometimes called semi-space. The idea is to split the heap into two halves. You allocate in one half, and when it fills up, you copy all the live objects into the other half and throw the first one away entirely. Fragmentation disappears because live objects get packed together during the copy. Allocation is fast because you just bump a pointer forward. The cost is that half your memory is always sitting empty, waiting to be the destination for the next copy.
 
-The third is reference counting. Every object keeps a count of how many pointers point to it. When a new reference is created, the count goes up. When a reference is removed, it goes down. When it hits zero, the object is freed immediately. There is no tracing, no pause, and destruction is deterministic. The problem is cycles. If two objects point to each other, both have a count of at least 1, even when nothing else in the program can reach them. Neither will ever be freed by reference counting alone.
+The third is reference counting. Every object keeps a count of how many pointers point to it. When a new reference is created, the count goes up. When a reference is removed, it goes down. When it hits zero, the object is freed immediately. There is no tracing, no pause and destruction is deterministic. The problem is cycles. If two objects point to each other, both have a count of at least 1, even when nothing else in the program can reach them. Neither will ever be freed by reference counting alone.
 
 
 Beyond the three algorithms, Wilson explores two observations that modern collectors depend on.
@@ -79,7 +79,7 @@ much more sophisticated, but the underlying structure is the same.
 
 ## The Two Fundamental Approaches
 
-Almost every garbage collector is either reference counting, tracing, or some combination of both. Wilson's paper is organized around this split, and it still holds thirty years later.
+Almost every garbage collector is either reference counting, tracing or some combination of both. Wilson's paper is organized around this split, and it still holds thirty years later.
 
 ### Reference Counting
 
@@ -108,7 +108,7 @@ Two problems make reference counting insufficient on its own.
   Both are garbage, but refcount never hits 0.
 ```
 
-This is not a theoretical edge case. Cycles show up naturally in linked data structures, parent-child relationships, observer patterns, and caches. I will talk about how Python deals with this when we get to CPython's GC later in the article.
+This is not a theoretical edge case. Cycles show up naturally in linked data structures, parent-child relationships, observer patterns and caches. I will talk about how Python deals with this when we get to CPython's GC later in the article.
 
 **Per-mutation overhead.** Every pointer assignment requires updating reference counts. In a multithreaded program these must be atomic operations, which are significantly more expensive.
 Every time you pass an object to a function, return it, or assign it to a field, you pay this cost.
@@ -117,8 +117,7 @@ Every time you pass an object to a function, return it, or assign it to a field,
 
 Instead of tracking individual references, a tracing collector starts from a set of known-live references called the root set and traverses the entire object graph. Every object it can reach gets marked as alive. Everything else gets freed.
 
-The root set is the starting point, so the definition of what counts as a root matters. The answer is the same across languages: a root is any reference the runtime can find without tracing. These are the pointers anchored to the program's execution state
-right now, the things you know are alive before any traversal begins.
+The root set is the starting point, so the definition of what counts as a root matters. The answer is the same across languages: a root is any reference the runtime can find without tracing. These are the pointers anchored to the program's execution stateright now, the things you know are alive before any traversal begins.
 
 In practice, roots fall into a few categories.
 
@@ -144,7 +143,7 @@ Anything else on the heap is garbage.
 ```
 
 The key insight is that roots are defined by what the runtime already knows is live without tracing. Everything else must earn its survival by being reachable from a root. This is why the concept is language-agnostic.
-The specific set of roots differs between Java, Go, and Python, but the principle is the same: start from what you know is live, trace outward, and reclaim the rest.
+The specific set of roots differs between Java, Go and Python, but the principle is the same: start from what you know is live, trace outward and reclaim the rest.
 
 Cycles are handled naturally. If A and B point to each other but neither is reachable from any root, the mark phase never visits them. They remain unmarked and get swept.
 
@@ -226,7 +225,7 @@ The downside is that compaction requires multiple passes over the heap: one to m
 
 One of the most influential observations in Wilson's paper is the weak generational hypothesis: most objects die young.
 
-In a typical web server, each request creates temporary objects (parsers, intermediate strings, response builders) that live for milliseconds. Configuration objects, connection pools, and caches live for the entire application lifetime.
+In a typical web server, each request creates temporary objects (parsers, intermediate strings, response builders) that live for milliseconds. Configuration objects, connection pools and caches live for the entire application lifetime.
 
 Generational collectors exploit this by dividing the heap into generations. New objects go into the young generation. If they survive a few collections, they get promoted to the old generation. Young generation collections are frequent and fast because most objects there are already dead. Old generation collections are rare.
 
@@ -251,7 +250,7 @@ The key implementation challenge is tracking references from old to young object
 
 ## Building a Toy Mark-and-Sweep GC in Go
 
-I wrote a minimal mark-and-sweep collector to make these concepts concrete. It is around 70 lines and demonstrates the full cycle: allocating objects, building an object graph, marking from roots, and sweeping unreachable objects.
+I wrote a minimal mark-and-sweep collector to make these concepts concrete. It is around 70 lines and demonstrates the full cycle: allocating objects, building an object graph, marking from roots and sweeping unreachable objects.
 
 ```go
 package main
@@ -362,7 +361,7 @@ gc: 0 objects remain
 
 First collection: A, B, and C are reachable through root A. D has no path from any root, so it gets collected.
 
-Second collection: A, B, and C form a cycle (A->B->C->A), but there are no roots. The mark phase never visits any of them. All three get swept. This is exactly the scenario that defeats reference counting. Each object in the cycle has a non-zero reference count, but none are reachable from a root.
+Second collection: A, B and C form a cycle (A->B->C->A), but there are no roots. The mark phase never visits any of them. All three get swept. This is exactly the scenario that defeats reference counting. Each object in the cycle has a non-zero reference count, but none are reachable from a root.
 
 **Tracing GCs do not care about cycles. They only care about reachability from roots.**
 
@@ -375,7 +374,7 @@ The toy collector above stops the world for the entire mark and sweep. Modern GC
 
 ### Go: Tri-Color Concurrent Mark-and-Sweep
 
-Go's garbage collector is non-generational, non-compacting, and concurrent. It does not separate objects by age, and it does not move objects in memory. The focus is on keeping pause times low.
+Go's garbage collector is non-generational, non-compacting and concurrent. It does not separate objects by age, and it does not move objects in memory. The focus is on keeping pause times low.
 
 The collector uses a tri-color abstraction for concurrent marking. Every object is in one of three states:
 
@@ -428,7 +427,11 @@ Example:
   Result: any remaining white objects are garbage and get freed
 ```
 
-The hard part is that the application keeps running and modifying pointers while the collector is traversing. If the application stores a pointer to a white object into a black object, the collector might never see it since it considers black objects done. That white object would be incorrectly freed.
+The hard part is that the application keeps running and modifying pointers while the collector is traversing. This creates a correctness problem that needs careful handling.
+
+The collector considers black objects finished. Once an object is black, the collector will never scan it again. All its children have been visited, all of them greyed. But if the application, while the collector is still running, writes a pointer to a white object into a black object, the collector has a problem. The black object is done. The white object is not reachable from any grey object either. When the mark phase ends and the sweep runs, the white object gets freed, even though a live black object was pointing to it.
+
+This is called the tricolor invariant: a black object must never point directly to a white one. If it does, the white object is invisible to the collector and will be incorrectly freed. The write barrier exists specifically to maintain this invariant whenever the application modifies the object graph during concurrent marking.
 
 Go solves this with a **hybrid write barrier**, introduced in Go 1.8. To understand why it works, it helps to look at the two older barriers it combines.
 
@@ -436,7 +439,7 @@ Go solves this with a **hybrid write barrier**, introduced in Go 1.8. To underst
 
 The problem is that goroutine stacks are different from heap objects. The write barrier is injected by the compiler at heap pointer writes, things like writing into a struct field or a slice element. Stack writes are local variable assignments, and the compiler treats them separately. Putting a barrier on every local variable assignment would make function calls and basic operations significantly more expensive, so the barrier does not cover them. This means that during concurrent marking, a goroutine can freely write a pointer to a white object into a local variable, and no barrier fires. The collector has no idea this happened.
 
-To fix this, at the end of concurrent marking, Go had to stop the world and re-scan every goroutine's entire stack from scratch. Any pointer to a white object found during re-scanning would get greyed, preventing it from being incorrectly freed. The pause time for this step scaled with the number of goroutines and the size of their stacks. A program with tens of thousands of goroutines could see multi-millisecond STW pauses just for this re-scan, even after the rest of the collector had been made concurrent. This was the dominant STW pause in Go before 1.8.
+To fix this, at the end of concurrent marking Go had to stop the world and re-scan every goroutine's entire stack from scratch. Any pointer to a white object found during re-scanning would get greyed, preventing it from being incorrectly freed. The pause time for this step scaled with the number of goroutines and the size of their stacks. A program with tens of thousands of goroutines could see multi-millisecond STW pauses just for this re-scan, even after the rest of the collector had been made concurrent. This was the dominant STW pause in Go before 1.8.
 
 **Yuasa's deletion barrier (1990)** takes the opposite approach: whenever a pointer is about to be overwritten, grey the old referent before it disappears. This ensures anything that was reachable at the start of marking stays reachable through to the end, even if the application drops its reference during marking. The downside is that some objects that died during marking survive to the next cycle (floating garbage), because the barrier conservatively kept them alive.
 
@@ -572,7 +575,7 @@ Reading this left to right:
 
 ### Java: G1GC (Garbage First Collector)
 
-G1GC has been the default Java garbage collector since JDK 9. It is a generational, region-based collector. It traces, marks, and compacts, but does so incrementally rather than all at once.
+G1GC has been the default Java garbage collector since JDK 9. It is a generational, region-based collector. It traces, marks, and compacts but does so incrementally rather than all at once.
 
 **Region layout.** G1 divides the heap into equal-sized regions, typically 1MB to 32MB each depending on heap size. Each region plays one of four roles at any time: Eden, Survivor, Old, or Humongous (for objects larger than half a region). The role of a region can change between collections.
 
@@ -600,7 +603,7 @@ Without SATB: X might have no other references, go unmarked, get freed while sti
 With SATB:    Write barrier records "X was here before", marks X grey. Safe.
 ```
 
-**Pause target.** You can configure G1's target max pause time with `-XX:MaxGCPauseMillis`. The default is 200ms. G1 tries to keep pauses within this target by adjusting region count, collection set size, and timing. It will not always succeed, particularly during Full GC, but it is the primary tuning knob.
+**Pause target.** You can configure G1's target max pause time with `-XX:MaxGCPauseMillis`. The default is 200ms. G1 tries to keep pauses within this target by adjusting region count, collection set size and timing. It will not always succeed, particularly during Full GC, but it is the primary tuning knob.
 
 **Try it yourself:**
 
@@ -811,9 +814,9 @@ print(f"Collected {collected} objects")  # Collected 4 objects (2 nodes + 2 dict
 
 Reference counting handles the common case, but it cannot collect cycles. CPython's answer is a separate cycle detector that runs on top of the reference counting system. The implementation lives in `Modules/gcmodule.c`.
 
-The cycle detector is a tracing collector, but it does not trace the entire heap. It only tracks objects that can participate in cycles: containers like lists, dicts, sets, and user-defined class instances. Strings and integers cannot hold references to other objects, so there is no point tracking them.
+The cycle detector is a tracing collector, but it does not trace the entire heap. It only tracks objects that can participate in cycles: containers like lists, dicts, sets and user-defined class instances. Strings and integers cannot hold references to other objects, so there is no point tracking them.
 
-Like Java's collectors, the cycle detector uses a generational approach. There are three generations, numbered 0, 1, and 2. The idea is the same as the generational hypothesis we discussed earlier: most objects die young, so check the young ones often and leave the old ones alone. The default thresholds are hardcoded in CPython's [`Modules/gcmodule.c`](https://github.com/python/cpython/blob/v3.9.6/Modules/gcmodule.c#L137):
+Like Java's collectors, the cycle detector uses a generational approach. There are three generations, numbered 0, 1 and 2. The idea is the same as the generational hypothesis we discussed earlier: most objects die young, so check the young ones often and leave the old ones alone. The default thresholds are hardcoded in CPython's [`Modules/gcmodule.c`](https://github.com/python/cpython/blob/v3.9.6/Modules/gcmodule.c#L137):
 
 ```c
 struct gc_generation generations[NUM_GENERATIONS] = {
@@ -857,7 +860,7 @@ gc.disable()
 
 When the detector runs on a generation, it needs to figure out which objects are only kept alive by cycles. A worked example makes the algorithm easier to follow.
 
-Say the detector is looking at three tracked objects: X, Y, and Z. X points to Y and Z. Y points back to X. There is also a local variable holding a reference to X.
+Say the detector is looking at three tracked objects: X, Y and Z. X points to Y and Z. Y points back to X. There is also a local variable holding a reference to X.
 
 ```
 local_var → X (refcount: 2) → Y (refcount: 1)
