@@ -63,12 +63,12 @@ Beyond the three algorithms, Wilson explores two observations that modern collec
 
 The first is the **generational hypothesis**: most objects die young. In practice, the temporary objects a program allocates
 (intermediate values, request-scoped buffers, loop variables) tend to become garbage very quickly, while a small fraction
-of objects live for the entire program. If you collect young objects frequently and old objects rarely, you do most of 
+of objects live for the entire program. If you collect young objects frequently and old objects rarely, you do most of
 your work on the part of the heap that is mostly garbage, which is much cheaper than scanning everything every time.
 
 The second is **tricolor marking**, an abstraction for incremental and concurrent collection. Instead of marking objects
 as simply visited or unvisited, you use three colors: white (not yet seen), grey (seen but children not yet scanned), and
-black (fully processed). The collector processes grey objects one at a time. At termination, white objects are garbage. 
+black (fully processed). The collector processes grey objects one at a time. At termination, white objects are garbage.
 This abstraction is what makes it possible to run the collector and the application simultaneously without them corrupting
 each other's view of the heap. Go's concurrent mark-and-sweep and ZGC's concurrent marking are both direct descendants of this idea.
 
@@ -542,7 +542,7 @@ Reading this left to right:
 - `0.044+0.56+0.13 ms clock`: Three phases of the GC cycle: STW mark start (0.044ms) + concurrent mark and scan (0.56ms) + STW mark end (0.13ms)
   The STW pauses are the first and third numbers in the clock field. In this example, the total wall clock time the application was frozen is 0.044 + 0.13 = 0.174ms.
   The 0.56ms in the middle is concurrent: your application was running the whole time. In Go, STW pauses are typically under 1ms, often well under 0.1ms.
-  
+
 - `0.62+0.21/0.57/0+1.8 ms cpu`: CPU time breakdown. The format is: `STW-start + assist/background/idle + STW-end`. Each number means:
 
   ```
@@ -609,27 +609,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GCDemo {
-    static List<byte[]> longLived = new ArrayList<>();
+  static List<byte[]> longLived = new ArrayList<>();
 
-    public static void main(String[] args) throws InterruptedException {
-        System.out.println("Starting GC demo...");
+  public static void main(String[] args) throws InterruptedException {
+    System.out.println("Starting GC demo...");
 
-        for (int round = 0; round < 50; round++) {
-            // Short-lived objects: create and immediately drop
-            for (int i = 0; i < 1000; i++) {
-                byte[] tmp = new byte[10 * 1024]; // 10KB each
-            }
+    for (int round = 0; round < 50; round++) {
+      // Short-lived objects: create and immediately drop
+      for (int i = 0; i < 1000; i++) {
+        byte[] tmp = new byte[10 * 1024]; // 10KB each
+      }
 
-            // Long-lived: retain some objects to build up old gen
-            if (round % 5 == 0) {
-                longLived.add(new byte[1024 * 1024]); // 1MB
-            }
+      // Long-lived: retain some objects to build up old gen
+      if (round % 5 == 0) {
+        longLived.add(new byte[1024 * 1024]); // 1MB
+      }
 
-            Thread.sleep(50);
-        }
-
-        System.out.println("Done. Long-lived objects: " + longLived.size());
+      Thread.sleep(50);
     }
+
+    System.out.println("Done. Long-lived objects: " + longLived.size());
+  }
 }
 ```
 
@@ -818,9 +818,9 @@ Like Java's collectors, the cycle detector uses a generational approach. There a
 ```c
 struct gc_generation generations[NUM_GENERATIONS] = {
     /* PyGC_Head,                                    threshold,    count */
-    {{(uintptr_t)_GEN_HEAD(0), (uintptr_t)_GEN_HEAD(0)},   700,        0},
-    {{(uintptr_t)_GEN_HEAD(1), (uintptr_t)_GEN_HEAD(1)},   10,         0},
-    {{(uintptr_t)_GEN_HEAD(2), (uintptr_t)_GEN_HEAD(2)},   10,         0},
+    { {(uintptr_t)_GEN_HEAD(0), (uintptr_t)_GEN_HEAD(0)},   700,        0},
+    { {(uintptr_t)_GEN_HEAD(1), (uintptr_t)_GEN_HEAD(1)},   10,         0},
+    { {(uintptr_t)_GEN_HEAD(2), (uintptr_t)_GEN_HEAD(2)},   10,         0},
 };
 ```
 
@@ -916,7 +916,7 @@ A few observations from this comparison:
 
 **ZGC's colored pointers are a modern implementation of Wilson's pointer-tagging idea.** Wilson mentions using bits in pointers for GC metadata. ZGC takes this further by embedding mark state, remap state, and finalization state directly into the 64-bit pointer. The load barrier that checks these bits on every pointer load is the price ZGC pays for sub-millisecond pauses.
 
-**The fundamental problem has not changed.** Tracing from roots, marking what is alive, reclaiming the rest. That is still the algorithm. Sixty years of research has made it  faster, concurrent, and more memory-efficient, but the core idea is the same.
+**The fundamental problem has not changed.** Tracing from roots, marking what is alive, reclaiming the rest. Everything since 1960 is an engineering refinement of McCarthy's original insight.
 
 ---
 
@@ -930,4 +930,5 @@ A few observations from this comparison:
 - [Java Garbage Collection: The G1 Garbage Collector](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html)
 - [ZGC: The Z Garbage Collector - JEP 333](https://openjdk.org/jeps/333)
 - [Generational ZGC - JEP 439](https://openjdk.org/jeps/439)
+- [Design of CPython's Garbage Collector](https://devguide.python.org/internals/garbage-collector/)
 - [PEP 442: Safe object finalization](https://peps.python.org/pep-0442/)
