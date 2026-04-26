@@ -10,17 +10,19 @@ tags: [java, virtual-threads, pinning, deadlock, jep-444, jep-491, loom, synchro
 
 # Java Virtual Threads: The Pinning Problem, the Deadlock, and the Fix in Java 24
 
-I ran into this in an internal Atlassian engineering writeup, there was a mention of a case study where a production service had stalled after adopting virtual threads in Java 21.
-Switching from virtual threads back to platform threads fixed it. It also linked to a Netflix engineering blog describing a similar issue.
-I wanted to understand exactly how that happens, so I went through the JEP specs, the Oracle docs, and the Netflix blog itself. I pulled together these notes from what I learned along the way.
+I ran into this in an internal Atlassian engineering writeup. A production service had stalled after adopting virtual threads in Java 21, and the fix was to switch back to platform threads. The writeup also linked to a Netflix engineering blog describing a nearly identical failure: their service stopped serving traffic entirely after enabling virtual threads, with thousands of sockets piling up in `CLOSE_WAIT`.
+
+I had been using virtual threads in a few services and had a rough idea of how they worked, but I did not understand the failure mode. How does adding more threads make a system stop? I went through [JEP 444](https://openjdk.org/jeps/444), [JEP 491](https://openjdk.org/jeps/491), the [Oracle virtual threads documentation](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html), and the [Netflix blog post](https://netflixtechblog.com/java-21-virtual-threads-dude-wheres-my-lock-3052540e231d) itself. These are my notes from that process.
 
 ---
 
 ## Virtual Threads
 
-A **virtual thread** is an instance of `java.lang.Thread` that is not tied to a particular OS thread. A **platform thread**, by contrast, is a thin wrapper around an OS thread. A platform thread runs Java code on its underlying OS thread, and it captures that OS thread for the platform thread's entire lifetime. This means platform threads are limited to the number of OS threads the operating system can support. Platform threads typically have a large thread stack and other resources maintained by the OS, so each one is expensive: the default stack size is around 1 MB (see the [Oracle JVM documentation on `-Xss`](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)), and the OS imposes a hard limit on how many you can create. If your server application uses the thread-per-request model, the number of platform threads becomes the bottleneck long before CPU or network bandwidth are exhausted.
+Java has two kinds of threads. A **platform thread** is what Java has always had: a thin wrapper around an OS thread. When you create a platform thread, the JVM asks the OS to allocate a new thread with its own stack (typically around 1 MB by default, configurable via [`-Xss`](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)). The platform thread occupies that OS thread for its entire lifetime. This means the number of platform threads you can have is limited by OS resources, and in practice a few thousand is the upper bound on most systems. If your server uses the thread-per-request model, the number of platform threads becomes the bottleneck long before CPU or network bandwidth are exhausted.
 
-Virtual threads solve this by decoupling the Java thread from the OS thread. The JVM maintains a small pool of platform threads called **carrier threads** and schedules virtual threads onto them. This is an M:N scheduling model: M virtual threads are multiplexed onto N carrier threads.
+A **virtual thread**, introduced in Java 21 via [JEP 444](https://openjdk.org/jeps/444), is also an instance of `java.lang.Thread`, but it is not tied to a particular OS thread. Its stack lives on the Java heap, not in OS-allocated memory. This makes virtual threads cheap: you can create millions of them without running into OS limits.
+
+The way virtual threads work is by decoupling the Java thread from the OS thread. The JVM maintains a small pool of platform threads called **carrier threads** and schedules virtual threads onto them. The JEP calls this **M:N scheduling**: M virtual threads multiplexed onto N carrier threads, the same idea as goroutines in Go or processes in Erlang.
 
 ```
 Virtual Threads (millions)        Carrier Threads (few, ~CPU cores)        OS Threads
@@ -39,15 +41,15 @@ Virtual Threads (millions)        Carrier Threads (few, ~CPU cores)        OS Th
 
 The scheduler is a `ForkJoinPool`, which is a thread pool where idle threads can steal tasks from the queues of busy threads. It operates in FIFO mode, meaning tasks are processed in the order they were submitted. By default, its parallelism equals `Runtime.availableProcessors()`, so on a 4-core machine you get 4 carrier threads serving potentially millions of virtual threads.
 
-Virtual threads are not faster than platform threads. They do not run code any faster than platform threads. They exist to provide scale (higher throughput), not speed (lower latency).
+One thing that tripped me up initially: virtual threads are not faster than platform threads. A virtual thread does not execute your code any faster. The benefit is throughput, not latency. If your application handles 10,000 concurrent requests that each spend 90% of their time waiting for I/O, you need 10,000 threads. With platform threads, that means 10,000 OS threads, which is expensive or impossible. With virtual threads, those 10,000 threads are heap objects scheduled onto a handful of carriers.
 
 ---
 
-## The Mount and Unmount Mechanism
+## Mounting and Unmounting
 
-The scheduling model above works because of a mechanism called **mounting** and **unmounting**. When a virtual thread is scheduled to run, the JVM mounts it onto a carrier thread. The virtual thread's stack (stored as **stack chunk** objects on the Java heap) is loaded, and the carrier begins executing the virtual thread's code.
+The scheduling model works because virtual threads can be **mounted** and **unmounted** from carrier threads. When a virtual thread is scheduled, the JVM loads its stack (stored as **stack chunk** objects on the Java heap) onto a carrier, and the carrier starts executing the virtual thread's code.
 
-When the virtual thread performs a blocking operation, like reading from a socket, calling `Thread.sleep()`, or calling `BlockingQueue.take()`, the JVM unmounts the virtual thread from the carrier. The virtual thread's state is saved back to the heap, and the carrier is immediately free to pick up another virtual thread.
+When the virtual thread hits a blocking operation, like reading from a socket, calling `Thread.sleep()`, or calling `BlockingQueue.take()`, the JVM does something that platform threads cannot do: it saves the virtual thread's stack back to the heap, detaches it from the carrier, and immediately lets the carrier pick up a different virtual thread. The original virtual thread is now parked on the heap, waiting for its I/O to complete, and occupying zero OS resources.
 
 ```java
 // This single line can cause multiple mount/unmount cycles
@@ -58,19 +60,17 @@ response.send(future1.get() + future2.get());
 // and so on
 ```
 
-This happens transparently. The developer writes straightforward blocking code, and the JVM handles the multiplexing underneath. No callbacks, no reactive chains, no `CompletableFuture` composition. The mechanism behind this is the `Continuation` primitive added to the JVM. When a virtual thread unmounts, its call stack is captured as a continuation object on the heap, and when the I/O is ready, the continuation is resumed on whichever carrier is free. The reason the same code does not block an OS thread is that the JDK's I/O libraries (`java.net`, `java.nio`, `java.util.concurrent`) were rewritten on top of the OS readiness APIs (`epoll` on Linux, `kqueue` on macOS, `IOCP` on Windows), the same primitives that Netty and other reactive frameworks use. The difference is that the developer never has to express the code in that style.
+The developer never sees any of this. You write the same blocking code you would write with platform threads, `socket.read()`, `future.get()`, `Thread.sleep()`, and the JVM handles the multiplexing underneath. You do not need to restructure your code into callbacks, reactive pipelines, or `CompletableFuture` chains.
 
-The JEP describes this clearly: "Typically, a virtual thread will unmount when it blocks on I/O or some other blocking operation in the JDK, such as `BlockingQueue.take()`. When the blocking operation is ready to complete (e.g., bytes have been received on a socket), it submits the virtual thread back to the scheduler, which will mount the virtual thread on a carrier to resume execution."
+Under the hood, this works because of the `Continuation` primitive added to the JVM. When a virtual thread unmounts, the JVM captures its call stack as a **continuation** object on the heap. When the I/O completes, the continuation is resumed on whichever carrier happens to be free (which might be a different carrier from the one it started on). The JDK's I/O libraries (`java.net`, `java.nio`, `java.util.concurrent`) were rewritten to use OS readiness APIs (`epoll` on Linux, `kqueue` on macOS, `IOCP` on Windows), the same primitives that Netty and other reactive frameworks use. The difference is that the developer never has to write code in that style.
 
-This whole scheme depends on the JVM being able to capture the virtual thread's stack at the blocking point. When it cannot, the virtual thread stays glued to its carrier. That is the pinning problem.
+This whole scheme depends on the JVM being able to capture the virtual thread's stack at the blocking point. When it cannot do that, the virtual thread stays glued to its carrier. That is the pinning problem.
 
 ---
 
 ## Creating Virtual Threads
 
-There are three main ways to create virtual threads.
-
-**Using `Thread.ofVirtual()`:**
+There are two common ways to create virtual threads. The first is `Thread.ofVirtual()`, which gives you a builder:
 
 ```java
 Thread thread = Thread.ofVirtual()
@@ -82,7 +82,7 @@ Thread thread = Thread.ofVirtual()
 thread.join();
 ```
 
-**Using `Executors.newVirtualThreadPerTaskExecutor()`:**
+The second, and the one you will see more often in server code, is `Executors.newVirtualThreadPerTaskExecutor()`. It creates a new virtual thread for every submitted task:
 
 ```java
 try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -95,37 +95,34 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 }  // executor.close() is called implicitly, and waits
 ```
 
-This creates 10,000 virtual threads, each sleeping for 1 second. With platform threads, you would need 10,000 OS threads. With virtual threads, the JVM runs all of them on a handful of carriers. The whole thing finishes in roughly 1 second, not 10,000 seconds.
+This example is adapted from [JEP 444](https://openjdk.org/jeps/444). It creates 10,000 virtual threads, each sleeping for 1 second. With platform threads, you would need 10,000 OS threads. With virtual threads, the JVM runs all of them on a handful of carriers. The whole thing finishes in roughly 1 second.
 
-**Using `Thread.startVirtualThread()`:**
-
-```java
-Thread thread = Thread.startVirtualThread(() -> {
-    System.out.println("Hello from virtual thread");
-});
-thread.join();
-```
-
-One thing to note: virtual threads should never be pooled. They are cheap to create and destroy. The JEP says: "Virtual threads are cheap and plentiful, and thus should never be pooled: A new virtual thread should be created for every application task." If you need to limit concurrency, use a `Semaphore`, not a thread pool.
+One thing to note: virtual threads should never be pooled. They are cheap to create and destroy, so you should create a new one for every task. If you had a thread pool of size 20 to limit concurrent access to a downstream service, do not replace it with a pool of virtual threads. Use a `Semaphore` with 20 permits instead, and let each request run on its own virtual thread.
 
 ---
 
-## The Pinning Problem
+## Pinning
 
 Not all blocking operations allow unmounting. There are two cases where a virtual thread gets **pinned** to its carrier, meaning the carrier thread is blocked along with the virtual thread:
 
-1. When the virtual thread executes code inside a `synchronized` block or method.
-2. When the virtual thread executes a native method or foreign function.
+1. When the virtual thread is inside a `synchronized` block or method.
+2. When the virtual thread is executing a native method or foreign function (JNI, Foreign Function API).
 
-The first case is the one that causes real problems in practice.
+The first case is the one I wanted to understand, because it is what caused the production failures.
 
-### `synchronized` and Monitor Ownership
+### Why `synchronized` Causes Pinning
 
-Java's `synchronized` keyword compiles to `monitorenter` and `monitorexit` bytecode instructions. They acquire and release an **object monitor**, which is the JVM's internal locking mechanism. In Java 21, object monitors are tied to the OS thread identity, not the virtual thread identity. When a virtual thread enters a synchronized block, the monitor is associated with the carrier thread that is currently running the virtual thread.
+To understand why `synchronized` is a problem, you need to know what happens at the JVM level when you write `synchronized(obj)`.
 
-If the virtual thread then performs a blocking operation inside the synchronized block (I/O, sleep, waiting for another lock), the JVM cannot unmount it. The monitor is owned by the carrier thread, not the virtual thread. If the JVM unmounted the virtual thread and let the carrier run something else, that new virtual thread would be executing on a carrier that still holds the monitor. The lock invariant breaks: either the new virtual thread inherits a lock it never acquired, or the original virtual thread loses a lock it never released. So the JVM does not unmount. The carrier stays blocked until the virtual thread exits the synchronized block.
+The `synchronized` keyword compiles to two bytecode instructions: `monitorenter` and `monitorexit`. These acquire and release an **object monitor**, which is the JVM's internal locking mechanism. Every Java object has a monitor associated with it. When a thread enters a synchronized block, the JVM records which thread owns that monitor.
 
-Let's follow this with a scenario:
+Here is the problem: in Java 21, the monitor tracks ownership by OS thread identity. When a virtual thread running on carrier CT-1 enters `synchronized(obj)`, the JVM records "CT-1 owns this monitor." It does not record the virtual thread's identity, because monitors predate virtual threads by decades and were designed around OS threads.
+
+Now suppose the virtual thread hits a blocking I/O call inside that synchronized block. Normally the JVM would unmount the virtual thread, freeing CT-1. But CT-1 still owns the monitor. If the JVM lets CT-1 run a different virtual thread, that new virtual thread would be executing on a carrier that holds a lock it never acquired. Worse, if the new virtual thread tries to enter the same `synchronized(obj)` block, the JVM sees "CT-1 already owns this monitor" and allows re-entry (monitors are reentrant), breaking mutual exclusion entirely.
+
+The JVM has no safe choice except to keep the virtual thread pinned to the carrier until `monitorexit`.
+
+Let me trace through the exact sequence:
 
 1. VT-1 is running on carrier CT-1.
 2. VT-1 enters `synchronized(obj)`. The JVM records CT-1 as the monitor owner (because monitors track OS threads, not virtual threads).
@@ -152,23 +149,21 @@ VT-2 on carrier CT-1:
   }
 ```
 
-The JEP states: "Pinning does not make an application incorrect, but it might hinder its scalability. If a virtual thread performs a blocking operation such as I/O or `BlockingQueue.take()` while it is pinned, then its carrier and the underlying OS thread are blocked for the duration of the operation."
-
-And critically: "The scheduler does not compensate for pinning by expanding its parallelism." The virtual thread scheduler is a `ForkJoinPool` with a fixed number of carrier threads. When a carrier gets pinned, the scheduler does not spin up an extra carrier to replace it. If you have 4 carriers and 2 are pinned, you run on 2. If all 4 are pinned, you run on zero. The pool size stays fixed, and every pinned carrier is a permanent reduction in capacity until the virtual thread exits the synchronized block.
+Pinning by itself does not make an application incorrect. A pinned virtual thread still works, it just holds onto its carrier longer than it should. The problem is scalability: every pinned carrier is a carrier that cannot serve other virtual threads. And the scheduler does not compensate. The `ForkJoinPool` has a fixed number of carrier threads and does not spin up extras when carriers get pinned. If you have 4 carriers and 2 are pinned, you are running on 2. If all 4 are pinned, you are running on zero.
 
 ### `ReentrantLock` and `LockSupport.park()`
 
 `ReentrantLock` from `java.util.concurrent.locks` uses `LockSupport.park()` internally to block threads waiting for the lock. `LockSupport.park()` is virtual-thread-aware. When a virtual thread parks on a `ReentrantLock`, the JVM can safely unmount the virtual thread from its carrier. The carrier is freed immediately to run other virtual threads.
 
-This is the key difference:
-- `synchronized` uses `monitorenter` (OS-thread-bound) -> pins the carrier
-- `ReentrantLock` uses `LockSupport.park()` (virtual-thread-aware) -> frees the carrier
+That is the difference between the two locking mechanisms:
+- `synchronized` uses `monitorenter`, which is tied to the OS thread. Pins the carrier.
+- `ReentrantLock` uses `LockSupport.park()`, which is virtual-thread-aware. Frees the carrier.
 
 ---
 
-## The Deadlock Scenario
+## From Pinning to Deadlock
 
-Pinning by itself does not cause a deadlock. The deadlock happens when pinning exhausts all carrier threads. Here is the step-by-step scenario:
+Pinning by itself does not cause a deadlock. A single pinned virtual thread just wastes one carrier temporarily. The deadlock happens when pinning exhausts all carrier threads at the same time:
 
 1. The JVM has N carrier threads (e.g., 2 on a 2-core machine, or configured via `-Djdk.virtualThreadScheduler.parallelism=2`).
 2. Multiple virtual threads compete for a shared `synchronized` lock.
@@ -191,7 +186,7 @@ Queued VTs:   VT-3, VT-4, ... VT-10000 (all waiting for a carrier)
 Result: No progress possible. System hangs.
 ```
 
-This is not a traditional deadlock (circular wait on two locks). It is a resource exhaustion deadlock: all carriers are consumed by pinned virtual threads, and no carrier is left to make forward progress.
+In a traditional deadlock, thread A holds lock 1 and waits for lock 2, while thread B holds lock 2 and waits for lock 1. That is not what happens here. No thread is waiting for a lock held by another thread. Instead, all carriers are consumed by pinned virtual threads, and no carrier is available to make forward progress. The scheduler has work to do (virtual threads are queued) but no carrier to do it on.
 
 ---
 
@@ -199,7 +194,7 @@ This is not a traditional deadlock (circular wait on two locks). It is a resourc
 
 Here is a complete, runnable Java 21 program that demonstrates carrier exhaustion caused by pinning. Save it as `VirtualThreadPinningDemo.java`.
 
-The key design choice: each virtual thread acquires its **own** independent lock and sleeps inside it. This means all threads can enter their synchronized blocks concurrently, and each one pins a carrier while sleeping. With 2 carriers and 4 threads, only 2 can run at a time. The other 2 are queued, waiting for a carrier to become free. Compare this with `ReentrantLock`, where virtual threads unmount during sleep and all 4 finish in ~2 seconds on the same 2 carriers.
+The demo gives each virtual thread its own independent lock object, so all threads can enter their synchronized blocks concurrently. Each one pins a carrier while sleeping inside the block. With 2 carriers and 4 threads, only 2 can run at a time. The other 2 sit in the scheduler queue, waiting for a carrier to become free. The `ReentrantLock` version does the same work, but virtual threads unmount during sleep, so all 4 finish in ~2 seconds on the same 2 carriers.
 
 ```java
 import java.util.concurrent.*;
@@ -383,9 +378,9 @@ ReentrantLock result:
 
 **Why 6 seconds instead of 4.** VT-0 and VT-1 start immediately and pin both carriers for 2 seconds. VT-2 and VT-3 are submitted at 9ms but cannot run because no carrier is available. When VT-0 finishes at ~2024ms, a carrier is freed and VT-2 gets scheduled. But VT-3 has to wait again. The actual batching ends up as three batches instead of the theoretical two:
 
-- Batch 1 (0--2s): VT-0, VT-1
-- Batch 2 (2--4s): VT-2
-- Batch 3 (4--6s): VT-3
+- Batch 1 (0 to 2s): VT-0, VT-1
+- Batch 2 (2 to 4s): VT-2
+- Batch 3 (4 to 6s): VT-3
 
 The extra 2 seconds come from pinned carriers not releasing cleanly at the exact same instant. Carrier release, virtual thread scheduling, and remounting all have overhead, and this overhead compounds when the scheduler is already starved.
 
@@ -481,40 +476,42 @@ Walking through each thread:
 
 ## Netflix: Pinning in Production
 
-Netflix documented their experience with virtual thread pinning in a detailed blog post titled ["Java 21 Virtual Threads - Dude, Where's My Lock?"](https://netflixtechblog.com/java-21-virtual-threads-dude-wheres-my-lock-3052540e231d) published in July 2024.
+Netflix documented this exact failure mode in a blog post titled ["Java 21 Virtual Threads - Dude, Where's My Lock?"](https://netflixtechblog.com/java-21-virtual-threads-dude-wheres-my-lock-3052540e231d), published in July 2024. Reading it is what made the pinning problem click for me, because it shows how it plays out in real production code rather than a contrived demo.
 
-### The Problem
+### What Happened
 
 Netflix was running Java 21 with SpringBoot 3 and embedded Tomcat. After enabling virtual threads for request handling, they started seeing intermittent timeouts and hung instances. Applications would stop serving traffic entirely while the JVM remained alive. The telltale symptom was thousands of sockets stuck in `CLOSE_WAIT` state. `CLOSE_WAIT` is a TCP socket state that means the remote side has closed the connection, but the local application has not yet closed its end. Sockets piling up in this state usually indicate the application is stuck and not processing connections.
 
-### The Root Cause
+### Tracing It to Brave
 
-The problem traced back to the Brave/Zipkin distributed tracing library. When a request completed, the code called `brave.RealSpan.finish()`, which used a `synchronized` block internally. Inside that synchronized block, the code attempted to acquire a `ReentrantLock` for reporting. The sequence was:
+The problem traced back to the Brave/Zipkin distributed tracing library. When a request completed, the code called `brave.RealSpan.finish()`, which used a `synchronized` block internally. Inside that synchronized block, the code attempted to acquire a `ReentrantLock` for reporting. Here is the sequence:
 
 1. Virtual thread handles an HTTP request via Tomcat
 2. Request completes, calls `RealSpan.finish()`
 3. `RealSpan.finish()` enters a `synchronized(state)` block
-4. Inside the synchronized block, `pendingSpans.finish()` is called, which flows downstream into `CountBoundedQueue.offer()` — this method acquires a `ReentrantLock`
+4. Inside the synchronized block, `pendingSpans.finish()` is called, which flows downstream into `CountBoundedQueue.offer()`. This method acquires a `ReentrantLock`
 5. The `ReentrantLock` is held by another thread, so the virtual thread blocks
-6. Because the block happens inside a `synchronized` block, the virtual thread is pinned — it cannot unmount
+6. Because the block happens inside a `synchronized` block, the virtual thread is pinned. It cannot unmount
 7. The carrier thread is stuck
 
 With 4 vCPUs, Netflix had 4 carrier threads. After 4 virtual threads got pinned inside `RealSpan.finish()`, the carrier pool was exhausted. No new requests could be served.
 
-### The Diagnosis
+### Why the System Hung
 
-Tomcat kept accepting connections and creating virtual threads for each request, but these threads could not be scheduled because all carriers were pinned. They sat in the scheduler queue while still holding the socket, which explains the climbing `CLOSE_WAIT` count. Heap dump analysis revealed:
+Tomcat kept accepting connections and creating virtual threads for each request, but those threads could not be scheduled because all carriers were pinned. They sat in the scheduler queue while still holding the socket, which explains the climbing `CLOSE_WAIT` count.
 
-- The `ReentrantLock`'s `exclusiveOwnerThread` was `null` (the lock had been released)
+The heap dump told the full story:
+
+- The `ReentrantLock`'s `exclusiveOwnerThread` was `null`. The lock had already been released
 - 6 threads were waiting for the same lock: 5 virtual threads + 1 platform thread
 - 4 of the 5 virtual threads were pinned to carrier threads
-- The lock was in a transient state: released but the next waiter could not proceed because no carrier was available to run it
+- The lock was in a transient state: released, but the next waiter could not proceed because no carrier was available to run it
 
-The deadlock pattern: lock holder releases the lock, the next thread is notified, but that thread cannot run because all carriers are pinned. The system is permanently stuck.
+The lock holder releases the lock, the next thread gets notified, but that thread cannot run because all carriers are pinned. The system is permanently stuck.
 
-### The Lesson
+### What Made This Hard to Catch
 
-The Netflix case is a good example of why pinning is hard to catch in practice. The `synchronized` block was not in their code. It was inside a third-party library (Brave). The developers had no idea that a tracing library was using `synchronized` in a way that would cause carrier thread exhaustion. You cannot always control which libraries use `synchronized` internally, and that is what makes this problem dangerous.
+The `synchronized` block was not in Netflix's own code. It was inside a third-party library (Brave). The developers had no idea that a tracing library was using `synchronized` in a way that could exhaust carrier threads. You cannot always control which libraries use `synchronized` internally, and you cannot always read the source of every transitive dependency on your classpath.
 
 ---
 
@@ -553,23 +550,19 @@ The PostgreSQL JDBC driver tracked the same issue. Source: [pgjdbc#1951](https:/
 
 ---
 
-## The Fix: Java 24 and JEP 491
+## Java 24: JEP 491
 
 JEP 491, titled "Synchronize Virtual Threads without Pinning," was delivered in Java 24. It rewrites the JVM's monitor implementation to be virtual-thread-aware.
 
 ### What Changed
 
-In Java 21 through 23, object monitors were tied to OS thread identity. The `monitorenter` bytecode associated the lock with the carrier thread running the virtual thread. This made unmounting impossible because releasing the carrier would release the monitor.
+In Java 21 through 23, as I described above, object monitors tracked ownership by OS thread identity. `monitorenter` associated the lock with the carrier thread, and that made unmounting impossible.
 
-In Java 24, the JVM decoupled monitors from OS threads. The key changes:
+Java 24 changes this at the JVM level. The monitor is now associated with the virtual thread itself, not the carrier. This one change makes the rest possible:
 
-1. **Virtual-thread-aware wait queues.** Monitors now track virtual threads separately from platform threads. When a virtual thread blocks on `Object.wait()` inside a synchronized block, the JVM can unmount it and free the carrier.
-
-2. **Monitor ownership by virtual thread identity.** The lock is now associated with the virtual thread itself, not the carrier thread. This means the virtual thread can be unmounted and remounted on a different carrier without violating lock semantics.
-
-3. **Unmounting during blocking operations inside `synchronized`.** In Java 21-23, a virtual thread that hit blocking I/O inside a synchronized block could not unmount because the monitor was tied to the carrier. In Java 24, the monitor is tied to the virtual thread, so the JVM can unmount the virtual thread, free the carrier, and remount the virtual thread on any available carrier when the blocking operation completes.
-
-Note: `Object.wait()` has always released the monitor before sleeping (that's core Java semantics since 1.0). The change in JEP 491 is about operations that **don't** release the monitor, like blocking I/O and `Thread.sleep()`.
+- When a virtual thread blocks on I/O or `Thread.sleep()` inside a synchronized block, the JVM can now unmount it and free the carrier, because the monitor stays with the virtual thread, not the carrier.
+- When the blocking operation completes, the virtual thread can be remounted on any available carrier, and it still owns the monitor. No lock semantics are violated.
+- `Object.wait()` inside a synchronized block also works correctly. `Object.wait()` has always released the monitor before sleeping (that is core Java semantics since 1.0). The change in JEP 491 is about operations that do not release the monitor, like blocking I/O and `Thread.sleep()`. In Java 24, those operations can now unmount too.
 
 ```
 Before JEP 491 (Java 21-23):
@@ -609,21 +602,21 @@ The synchronized version now runs without pinning the carriers. Virtual threads 
 
 ---
 
-## Guidelines for Using Virtual Threads
+## Practical Guidelines
 
-Based on the Oracle documentation, the JEP specifications, and the lessons from Netflix and the broader ecosystem, here are the practical guidelines:
+Based on everything above, here is what I would tell someone adopting virtual threads today:
 
 **Do not pool virtual threads.** Create a new virtual thread for every task. Use `Executors.newVirtualThreadPerTaskExecutor()` or `Thread.ofVirtual().start()`. If you need to limit concurrency, use a `Semaphore`.
 
-**On Java 21 through 23, replace `synchronized` with `ReentrantLock`** in code that runs on virtual threads and performs blocking operations inside the critical section. Short, non-blocking synchronized blocks are fine. The JEP says: "There is no need to replace synchronized blocks and methods that guard short-lived or infrequent operations."
+**On Java 21 through 23, replace `synchronized` with `ReentrantLock`** in code that runs on virtual threads and performs blocking operations inside the critical section. Short, non-blocking synchronized blocks are fine. As the JEP notes, there is no need to replace synchronized blocks that guard short-lived or infrequent operations.
 
 **On Java 24+, `synchronized` is safe again.** JEP 491 eliminates the pinning problem for synchronized blocks. You do not need to refactor existing code.
 
 **Watch out for third-party libraries.** The Netflix incident was caused by a `synchronized` block inside Brave, not in their own code. Use `-Djdk.tracePinnedThreads=full` during testing to identify pinning in dependencies.
 
-**Virtual threads help when the workload is I/O-bound.** If your application spends most of its time waiting for network responses, database queries, or file I/O, virtual threads will improve throughput. If the workload is CPU-bound, virtual threads will not help because having more threads than cores does not increase compute throughput.
+**Virtual threads help when the workload is I/O-bound.** If your application spends most of its time waiting for network responses, database queries, or file I/O, virtual threads will improve throughput by keeping carriers busy while other virtual threads wait. If the workload is CPU-bound (image processing, cryptography, heavy computation), virtual threads will not help. Having more threads than cores does not give you more CPU cycles.
 
-**Avoid caching expensive resources in ThreadLocal.** With platform threads, you might store a database connection in a `ThreadLocal` and reuse it across tasks sharing the same thread. With virtual threads, each thread is short-lived and gets its own `ThreadLocal`. Creating an expensive resource per virtual thread defeats the purpose. Use connection pools instead.
+**Be careful with `ThreadLocal`.** With platform threads, you might store a database connection or a `SimpleDateFormat` in a `ThreadLocal` and reuse it across requests that happen to land on the same thread. With virtual threads, each thread is short-lived and gets its own `ThreadLocal`, so storing expensive resources there means creating one per request. Use connection pools and thread-safe formatters instead.
 
 **Use JFR for production monitoring.** The `jdk.VirtualThreadPinned` event (enabled by default with a 20 ms threshold) will alert you to pinning in production without adding overhead.
 
