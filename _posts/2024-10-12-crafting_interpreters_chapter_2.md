@@ -1,3 +1,10 @@
+---
+layout: post
+title: "Notes from Crafting Interpreters - Chapter 2 (A Map of the Territory)"
+date: 2024-10-12
+categories: [compilers, programming-languages]
+---
+
 # Notes from Crafting Interpreters - Chapter 2 (A Map of the Territory)
 
 I have started reading Crafting Interpreters by Bob Nystrom. This is a book about creating interpreters for a 

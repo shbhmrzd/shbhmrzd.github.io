@@ -2,7 +2,7 @@
 layout: post
 title: "Running: A Metaphor for Life"
 date: 2026-03-15
-categories: personal reflections
+categories: [personal, reflections]
 ---
 
 ![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fpersonal%2Freflections%2F2026%2F03%2F15%2Frunning-a-metaphor-for-life.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)

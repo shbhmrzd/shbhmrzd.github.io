@@ -1,3 +1,10 @@
+---
+layout: post
+title: "Memory Layout of a Rust Program"
+date: 2024-08-31
+categories: [systems, rust, memory-management]
+---
+
 ## Memory layout of a Rust program
 
 Before we delve into the memory layout of a Rust program, it's essential to establish a foundational understanding of what a variable is, what it stores, and where this data resides in memory.
