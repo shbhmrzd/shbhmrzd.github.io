@@ -1,0 +1,127 @@
+---
+layout: default
+---
+
+<div class="hero">
+  <h1>Hi, I'm Shubham</h1>
+  <p class="tagline">Software developer writing about systems internals, distributed systems, and things I learn along the way.</p>
+  <div class="hero-links">
+    <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn
+    </a>
+    <a href="https://shbhmrzd.medium.com" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+      Medium
+    </a>
+  </div>
+</div>
+
+<!-- Category Filter -->
+<div class="category-filter" id="categoryFilter">
+  <button class="category-pill active" data-category="all">All</button>
+  <button class="category-pill" data-category="systems">Systems</button>
+  <button class="category-pill" data-category="java">Java</button>
+  <button class="category-pill" data-category="databases">Databases</button>
+  <button class="category-pill" data-category="distributed-systems">Distributed Systems</button>
+  <button class="category-pill" data-category="software-engineering">Software Engineering</button>
+  <button class="category-pill" data-category="ai">AI</button>
+  <button class="category-pill" data-category="personal">Personal</button>
+</div>
+
+<!-- Post Cards -->
+<h2 class="post-list-heading">Recent Posts</h2>
+
+<div id="postList">
+  {%- for post in site.posts -%}
+  {%- assign word_count = post.content | number_of_words -%}
+  {%- assign reading_time = word_count | divided_by: 200 -%}
+  {%- if reading_time < 1 -%}{%- assign reading_time = 1 -%}{%- endif -%}
+
+  {%- assign post_categories = "" -%}
+  {%- for cat in post.categories -%}
+    {%- assign post_categories = post_categories | append: cat | append: " " -%}
+  {%- endfor -%}
+
+  <div class="post-card" data-categories="{{ post_categories | strip | downcase }}">
+    <h3 class="post-card-title">
+      <a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+    </h3>
+    <div class="post-card-meta">
+      <time datetime="{{ post.date | date_to_xmlschema }}">
+        {{ post.date | date: "%b %-d, %Y" }}
+      </time>
+      <span class="separator">&middot;</span>
+      <span class="reading-time">{{ reading_time }} min read</span>
+    </div>
+    <div class="post-card-tags">
+      {%- for cat in post.categories -%}
+        <span class="post-card-tag tag-{{ cat }}">{{ cat | replace: "-", " " }}</span>
+      {%- endfor -%}
+    </div>
+    <p class="post-card-excerpt">{{ post.excerpt | strip_html | truncate: 150 }}</p>
+  </div>
+  {%- endfor -%}
+</div>
+
+<!-- External Articles Section -->
+<div class="external-section">
+  <h2>Also Published On</h2>
+
+  <div class="external-card">
+    <svg class="external-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+    <div class="external-info">
+      <div class="external-title"><a href="https://medium.com/walmartglobaltech/stl-and-holt-from-r-to-sparkr-1815bacfe1cc" target="_blank" rel="noopener">STL and Holt from R to SparkR</a></div>
+      <div class="external-subtitle">Walmart Global Tech Blog on Medium</div>
+    </div>
+  </div>
+
+  <div class="external-card">
+    <svg class="external-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+    <div class="external-info">
+      <div class="external-title"><a href="https://medium.com/analytics-vidhya/setting-up-isolated-virtual-environments-in-sparkr-ff4795db8cfc" target="_blank" rel="noopener">Setting up Isolated Virtual Environments in SparkR</a></div>
+      <div class="external-subtitle">Analytics Vidhya on Medium</div>
+    </div>
+  </div>
+
+  <div class="external-card">
+    <svg class="external-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    <div class="external-info">
+      <div class="external-title"><a href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener">LinkedIn Posts</a></div>
+      <div class="external-subtitle">Technical discussions and industry insights</div>
+    </div>
+  </div>
+</div>
+
+<!-- Category filter JS -->
+<script>
+(function() {
+  var pills = document.querySelectorAll('.category-pill');
+  var cards = document.querySelectorAll('.post-card');
+
+  pills.forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      pills.forEach(function(p) { p.classList.remove('active'); });
+      pill.classList.add('active');
+
+      var cat = pill.getAttribute('data-category');
+      cards.forEach(function(card) {
+        if (cat === 'all') {
+          card.style.display = '';
+        } else {
+          var cardCats = card.getAttribute('data-categories') || '';
+          if (cardCats.indexOf(cat) !== -1) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        }
+      });
+    });
+  });
+})();
+</script>

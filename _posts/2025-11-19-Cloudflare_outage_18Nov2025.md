@@ -1,3 +1,10 @@
+---
+layout: post
+title: "Cloudflare Outage 2025-11-18"
+date: 2025-11-19
+categories: [systems, incident-analysis]
+---
+
 # Cloudflare Outage 2025-11-18
 
 This article is also published on [LinkedIn](https://www.linkedin.com/posts/shubham-raizada_cloudflare-outage-on-november-18-2025-activity-7396889475320242176-Jlxs?utm_source=share&utm_medium=member_desktop&rcm=ACoAABJVSgcBaThXKvKVt-0GEAwQrrvaMKqorMs)
