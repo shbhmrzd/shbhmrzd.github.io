@@ -2,7 +2,7 @@
 layout: post
 title: "Optimizing a Kernel from 147,734 to 2,333 Cycles: A Learning Journey"
 date: 2026-02-01
-categories: [systems, performance, optimization, kernel]
+categories: [ai, systems, performance, optimization, kernel]
 ---
 
 ![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fperformance%2Foptimization%2Fkernel%2F2026%2F02%2F01%2Fkernel-optimisation-learning-journey.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
