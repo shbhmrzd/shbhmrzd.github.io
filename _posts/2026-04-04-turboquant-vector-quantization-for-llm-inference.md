@@ -2,7 +2,7 @@
 layout: post
 title: "TurboQuant and Vector Quantization: From Shannon to KV Cache Compression"
 date: 2026-04-04
-categories: [systems, ml-infrastructure, quantization]
+categories: [ai, systems, ml-infrastructure, quantization]
 tags: [quantization, vector-quantization, llm, inference, kv-cache, turboquant, rate-distortion]
 ---
 
