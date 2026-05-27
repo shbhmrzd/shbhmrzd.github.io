@@ -17,9 +17,9 @@ I decided to sit down and read through the fundamentals properly, taking notes s
 The article grew long enough that I have broken it into four parts:
 
 - **Part 1 (this post)**: How LLMs Process Text. Tokenization, embeddings, and the forward pass.
-- **[Part 2: How LLMs Learn](/link-to-part-2)**: The loss function, backpropagation, and optimizers.
-- **[Part 3: From Toy Model to GPT](/link-to-part-3)**: Scaling, what the model learns, fine-tuning and RLHF.
-- **[Part 4: Using the Trained Model](/link-to-part-4)**: Inference, the KV cache, and decoding strategies.
+- **Part 2: How LLMs Learn**: The loss function, backpropagation, and optimizers.
+- **Part 3: From Toy Model to GPT**: Scaling, what the model learns, fine-tuning and RLHF.
+- **Part 4: Using the Trained Model**: Inference, the KV cache, and decoding strategies.
 
 ---
 
