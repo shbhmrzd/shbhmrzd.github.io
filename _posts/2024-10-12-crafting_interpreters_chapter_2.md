@@ -2,7 +2,7 @@
 layout: post
 title: "Notes from Crafting Interpreters - Chapter 2 (A Map of the Territory)"
 date: 2024-10-12
-categories: [compilers, programming-languages]
+categories: [systems, compilers, programming-languages]
 ---
 
 # Notes from Crafting Interpreters - Chapter 2 (A Map of the Territory)
