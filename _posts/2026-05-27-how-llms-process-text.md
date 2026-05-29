@@ -17,7 +17,7 @@ I decided to sit down and read through the fundamentals properly, taking notes s
 The article grew long enough that I have broken it into four parts:
 
 - **Part 1 (this post)**: How LLMs Process Text. Tokenization, embeddings, and the forward pass.
-- **Part 2: How LLMs Learn**: The loss function, backpropagation, and optimizers.
+- **[Part 2: How LLMs Learn](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html)**: The loss function, backpropagation, and optimizers.
 - **Part 3: From Toy Model to GPT**: Scaling, what the model learns, fine-tuning and RLHF.
 - **Part 4: Using the Trained Model**: Inference, the KV cache, and decoding strategies.
 
@@ -31,7 +31,7 @@ That is the entire objective of training. The model learns to predict the next t
 
 A model is, at its core, a massive collection of numbers. These numbers are called **parameters**. Think of them as knobs on a machine: each knob is set to some value, and together all the knobs determine what the machine does. The input text is first converted into numbers too (I will cover how in the Tokenization section below), and then those numbers are multiplied by, added to, and transformed by the model's parameters at every step. The final output depends entirely on what values the knobs are set to. Llama-3.1-8B has 8 billion parameters.
 
-Before training, most of them are set to small random values. If all parameters started at zero, every part of the model would compute the same output, receive the same gradient, and update identically. The model would be stuck doing the same thing everywhere and could never learn to distinguish different patterns. Random initialization breaks this symmetry, giving each part of the model a different starting point so it can specialize during training. (I cover gradients and how training updates these parameters in Part 2.)
+Before training, most of them are set to small random values. If all parameters started at zero, every part of the model would compute the same output, receive the same gradient, and update identically. The model would be stuck doing the same thing everywhere and could never learn to distinguish different patterns. Random initialization breaks this symmetry, giving each part of the model a different starting point so it can specialize during training. (I cover gradients and how training updates these parameters in [Part 2](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html).)
 
 At the start, the model cannot predict anything useful. If you feed it "The cat sat on the" and ask it to predict the next token, it will output something random, maybe "purple" or "seventeen" or a punctuation mark. It has no idea.
 
@@ -236,9 +236,9 @@ After all 32 layers, you have a final vector of 4,096 numbers for each token in 
 
 These 5 vectors are not stored anywhere permanently. They are temporary working copies, computed fresh every time the model processes a sentence. The embedding table still has just one row for "the." When the model starts processing this sentence, it pulls two copies of that same row (one for each "the" in the input). Both copies start identical. But as they flow through the 32 layers, attention modifies each copy based on its surrounding context. The first "The" at position 0 had no prior tokens to attend to. The second "the" at position 4 has access to "cat," "sat," "on" and can ground itself with more context. By the time they exit layer 32, the two copies carry very different vectors.
 
-This is the same idea as the "apple" example from earlier. The embedding table always has one row for "apple," one row for "the," one row for every token. That row is a generic starting point. The transformer layers create context-specific representations during each forward pass, but those representations are temporary. They are used to predict the next token and then discarded. The embedding table row itself only gets adjusted during training as part of the parameter update process (covered in Part 2).
+This is the same idea as the "apple" example from earlier. The embedding table always has one row for "apple," one row for "the," one row for every token. That row is a generic starting point. The transformer layers create context-specific representations during each forward pass, but those representations are temporary. They are used to predict the next token and then discarded. The embedding table row itself only gets adjusted during training as part of the parameter update process (covered in [Part 2](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html)).
 
-During training, the model processes a sentence, produces temporary vectors, uses them to predict the next token, and compares that prediction to the actual next token in the training text. The difference between the prediction and reality is used to adjust the permanent parameters slightly. This repeats trillions of times. Over those trillions of updates, the parameters get shaped so that the model becomes good at transforming generic token embeddings into context-rich representations. I cover the mechanics of how this adjustment works in Part 2.
+During training, the model processes a sentence, produces temporary vectors, uses them to predict the next token, and compares that prediction to the actual next token in the training text. The difference between the prediction and reality is used to adjust the permanent parameters slightly. This repeats trillions of times. Over those trillions of updates, the parameters get shaped so that the model becomes good at transforming generic token embeddings into context-rich representations. I cover the mechanics of how this adjustment works in [Part 2](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html).
 
 During inference, the parameters are fixed. The model still creates temporary copies and transforms them through the layers, just like during training, but there is no adjustment step. The parameters have already been shaped by training to produce useful transformations.
 
@@ -367,7 +367,7 @@ For developers building on top of LLMs, the context window determines how much t
 
 In this article I covered how LLMs process text: tokenization converts text into numbers, those numbers are represented as embeddings (vectors of 4,096 numbers), and the transformer layers refine these embeddings by mixing information across the sequence through attention and creating new features through the feedforward network. After 32 layers, the final layer produces a probability distribution over the entire vocabulary for the next token.
 
-All of this assumes the model has been trained. Before training, the parameters are random and the predictions are useless. The model needs a way to measure how wrong its predictions are, compare them to the actual text, and adjust its parameters to do better next time. That is what I will cover in the next article Part 2: How LLMs Learn. We will go over the loss function, backpropagation, and the optimizers which drive the learning process.
+All of this assumes the model has been trained. Before training, the parameters are random and the predictions are useless. The model needs a way to measure how wrong its predictions are, compare them to the actual text, and adjust its parameters to do better next time. That is what I will cover in the next article [Part 2: How LLMs Learn](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html). We will go over the loss function, backpropagation, and the optimizers which drive the learning process.
 
 ---
 
