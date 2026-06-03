@@ -516,13 +516,13 @@ At step 0, the loss is about 3.34. That is close to log(28) = 3.33, which is the
 
 By step 400, the loss has dropped to 0.23. That is a perplexity of e^0.23 = 1.26, meaning the model is almost never surprised by the next character. It has nearly memorized the training text and can reproduce it.
 
-The generated text after training looks like the training data because we trained on a tiny repeated paragraph and the model memorized it. For a real LLM training on trillions of diverse tokens, the model cannot memorize everything and has to learn general patterns instead. But the training loop is the same: forward pass, loss, backprop, optimizer step. The difference is scale, which I will cover in Part 3.
+The generated text after training looks like the training data because we trained on a tiny repeated paragraph and the model memorized it. For a real LLM training on trillions of diverse tokens, the model cannot memorize everything and has to learn general patterns instead. But the training loop is the same: forward pass, loss, backprop, optimizer step. The difference is scale, which I will cover in [Part 3](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/06/03/from-toy-model-to-gpt.html).
 
 ---
 
 ## Closing
 
-In Part 3: From Toy Model to GPT, I will cover what happens when you scale this training loop to billions of parameters and trillions of tokens: parallelism across GPUs, what the model actually learns at each layer, and post-training alignment (fine-tuning, RLHF, DPO) that transforms a base model into the assistant you interact with.
+In [Part 3: From Toy Model to GPT](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/06/03/from-toy-model-to-gpt.html), I will cover what happens when you scale this training loop to billions of parameters and trillions of tokens: parallelism across GPUs, what the model actually learns at each layer, and post-training alignment (fine-tuning, RLHF, DPO) that transforms a base model into the assistant you interact with.
 
 ---
 
