@@ -96,7 +96,7 @@ BPE works like this:
 
 Here is a small example. Suppose our training text is: "low lower lowest low lower"
 
-For simplicity, this example uses only ASCII characters, so each character is one byte. The starting tokens are: `l`, `o`, `w`, ` `, `e`, `r`, `s`, `t`
+For simplicity, this example uses only ASCII characters, so each character is one byte. The starting tokens are: `l`, `o`, `w`, `␣`, `e`, `r`, `s`, `t`
 
 Count adjacent pairs:
 - `l` + `o` appears 5 times (in each "low")
@@ -140,7 +140,7 @@ You might assume that more data always means a better model, but it is not that 
 
 ### A Brief Recap of the Architecture
 
-I covered embeddings, attention mechanisms, and weight matrices in detail in my [TurboQuant post](https://shbhmrzd.github.io/systems/ml-infrastructure/quantization/2026/04/04/turboquant-vector-quantization-for-llm-inference.html). Here is the quick version.
+I covered embeddings, attention mechanisms, and weight matrices in detail in my [TurboQuant post](https://shbhmrzd.github.io/ai/systems/ml-infrastructure/quantization/2026/04/04/turboquant-vector-quantization-for-llm-inference.html). Here is the quick version.
 
 You start with a token ID, which is just a number. The model looks up that ID in the **embedding table** (introduced in the Tokenization section above). The table has one row per token in the vocabulary. Each row is a list of numbers. The length of this list is called the **embedding dimension**. For Llama-3.1-8B, the embedding dimension is 4,096, meaning each token is represented by 4,096 numbers. A larger embedding dimension gives each token more room to encode nuanced information (more "slots" to represent different aspects of meaning), but it also increases the parameter count and computation throughout the model, since every layer operates on vectors of this size. Smaller models like GPT-2 Small use 768 dimensions. Llama 3.1-70B uses 8,192. Once the vocabulary is fixed (from the tokenization step above), the model creates the embedding table with one row per token. Before training, these rows are filled with small random numbers. They carry no meaning yet. During training, they get adjusted so that tokens used in similar contexts end up with similar numbers. To see why, consider how training works. The model uses the embedding vector to predict the next token. When it gets the prediction wrong, it adjusts the vector to make the prediction better. Now think about "dog" and "cat." Both appear in sentences like "The ___ sat on the mat" and "She fed the ___." The correct prediction after each word is the same. So the training process applies similar adjustments to both vectors: any vector that helps predict a noun in the object position gets tweaked in the same direction. After many training steps, the embeddings for "dog" and "cat" end up close to each other in the 4,096-dimensional space. More generally, embeddings encode something like "semantic similarity": words used in similar contexts get similar vectors.
 
