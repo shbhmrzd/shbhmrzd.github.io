@@ -101,12 +101,12 @@ For simplicity, this example uses only ASCII characters, so each character is on
 Count adjacent pairs:
 - `l` + `o` appears 5 times (in each "low")
 - `o` + `w` appears 5 times
-- `w` + ` ` appears 2 times
+- `w` + `␣` appears 2 times
 - and so on
 
-The most frequent pairs are `l` + `o` and `o` + `w`, both appearing 5 times. BPE picks one (implementations break ties differently, here we take `l` + `o` first). Merge it into a new token `lo`. Now our text in tokens is: `lo`, `w`, ` `, `lo`, `w`, `e`, `r`, ` `, `lo`, `w`, `e`, `s`, `t`, ` `, `lo`, `w`, ` `, `lo`, `w`, `e`, `r`.
+The most frequent pairs are `l` + `o` and `o` + `w`, both appearing 5 times. BPE picks one (implementations break ties differently, here we take `l` + `o` first). Merge it into a new token `lo`. Now our text in tokens is: `lo`, `w`, `␣`, `lo`, `w`, `e`, `r`, `␣`, `lo`, `w`, `e`, `s`, `t`, `␣`, `lo`, `w`, `␣`, `lo`, `w`, `e`, `r`.
 
-Next most frequent: `lo` + `w` (5 times). Merge into `low`. Now: `low`, ` `, `low`, `e`, `r`, ` `, `low`, `e`, `s`, `t`, ` `, `low`, ` `, `low`, `e`, `r`.
+Next most frequent: `lo` + `w` (5 times). Merge into `low`. Now: `low`, `␣`, `low`, `e`, `r`, `␣`, `low`, `e`, `s`, `t`, `␣`, `low`, `␣`, `low`, `e`, `r`.
 
 Next most frequent: `low` + `e` (3 times). Merge into `lowe`. And so on.
 
