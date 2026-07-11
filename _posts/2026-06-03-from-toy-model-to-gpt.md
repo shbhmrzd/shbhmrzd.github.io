@@ -20,7 +20,7 @@ In [Part 1](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/27
 
 The toy model from [Part 2](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html) fits in a few megabytes and trains in seconds. Real LLMs need significantly more.
 
-Llama-3.1-8B has 8 billion parameters. As I discussed in the [TurboQuant post](https://shbhmrzd.github.io/systems/ml-infrastructure/quantization/2026/04/04/turboquant-vector-quantization-for-llm-inference.html), each parameter stored in FP16 (16-bit floating point) takes 2 bytes. So just storing the model parameters takes 8 billion x 2 bytes = 16 GB.
+Llama-3.1-8B has 8 billion parameters. As I discussed in the [TurboQuant post](https://shbhmrzd.github.io/ai/systems/ml-infrastructure/quantization/2026/04/04/turboquant-vector-quantization-for-llm-inference.html), each parameter stored in FP16 (16-bit floating point) takes 2 bytes. So just storing the model parameters takes 8 billion x 2 bytes = 16 GB.
 
 But during training, you need much more than just the parameters:
 
