@@ -10,7 +10,7 @@ tags: [llm, inference, kv-cache, decoding, top-k, top-p, temperature]
 
 # How LLMs Work, Part 4: Using the Trained Model
 
-A while back I wrote a [post on TurboQuant](/ml-foundations/llm-training/2026/04/04/turboquant-vector-quantization-for-llm-inference.html), about compressing the KV cache to make inference cheaper. At that point I was reasoning about the size of the KV cache without knowing how it gets filled in the first place, or where the Keys and Values come from. I knew it stored Key and Value vectors, but I could not have explained what actually happens between hitting enter and seeing the first word appear, or why the response streams out one word at a time instead of all at once.
+A while back I wrote a [post on TurboQuant](https://shbhmrzd.github.io/ai/systems/ml-infrastructure/quantization/2026/04/04/turboquant-vector-quantization-for-llm-inference.html), about compressing the KV cache to make inference cheaper. At that point I was reasoning about the size of the KV cache without knowing how it gets filled in the first place, or where the Keys and Values come from. I knew it stored Key and Value vectors, but I could not have explained what actually happens between hitting enter and seeing the first word appear, or why the response streams out one word at a time instead of all at once.
 
 I have been writing up how LLMs work for software engineers who don't have an ML background. This is the last part of the series. Parts [1](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/27/how-llms-process-text.html), [2](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html), and [3](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/06/03/from-toy-model-to-gpt.html) covered how text is processed, how models learn, and how training scales. All of that produces a model sitting in memory as billions of trained parameters. This post covers what happens when you type a prompt and hit enter. How the model generates one token at a time, why that is slow, what the KV cache does about it and how decoding strategies shape the response.
 
@@ -153,7 +153,7 @@ The cache does not eliminate all redundant work. Each new token's query still at
 
 ![KV Cache: eliminating redundant K/V projections](/assets/img/llm_part4_inference/kv_cache_comparison.png)
 
-The [TurboQuant post](/ml-foundations/llm-training/2026/04/04/turboquant-vector-quantization-for-llm-inference.html) goes deeper into KV cache compression techniques for reducing this memory bottleneck.
+The [TurboQuant post](https://shbhmrzd.github.io/ai/systems/ml-infrastructure/quantization/2026/04/04/turboquant-vector-quantization-for-llm-inference.html) goes deeper into KV cache compression techniques for reducing this memory bottleneck.
 
 ---
 
