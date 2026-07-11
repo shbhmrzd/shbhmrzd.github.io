@@ -19,7 +19,7 @@ The article grew long enough that I have broken it into four parts:
 - **Part 1 (this post)**: How LLMs Process Text. Tokenization, embeddings, and the forward pass.
 - **[Part 2: How LLMs Learn](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/05/29/how-llms-learn.html)**: The loss function, backpropagation, and optimizers.
 - **[Part 3: From Toy Model to GPT](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/06/03/from-toy-model-to-gpt.html)**: Scaling, what the model learns, fine-tuning and RLHF.
-- **Part 4: Using the Trained Model**: Inference, the KV cache, and decoding strategies.
+- **[Part 4: Using the Trained Model](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/07/11/using-the-trained-model.html)**: Inference, the KV cache, and decoding strategies.
 
 ---
 

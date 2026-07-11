@@ -258,4 +258,4 @@ The diagram below shows how all the stages fit together. Pre-training produces a
 
 This article covered the training side of large language models. How much memory they need, how training is split across GPUs, why training is so expensive, how scaling laws shape model and data choices, why data quality matters, what different layers learn, and how post-training alignment turns a base model into an assistant.
 
-The next step is inference, running the trained model to generate text. In Part 4, I will cover how generation works one token at a time, why the KV cache matters, and how decoding strategies like temperature, top-k, and top-p control the style and diversity of the output.
+The next step is inference, running the trained model to generate text. In [Part 4](https://shbhmrzd.github.io/ai/ml-foundations/llm-training/2026/07/11/using-the-trained-model.html), I cover how generation works one token at a time, why the KV cache matters, and how decoding strategies like temperature, top-k, and top-p control the style and diversity of the output.
