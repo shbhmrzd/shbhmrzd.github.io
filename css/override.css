@@ -428,35 +428,191 @@ img {
   max-width: 600px;
 }
 
-.hero-links {
-  display: flex;
-  gap: 1em;
-  flex-wrap: wrap;
+/* --- Profile knowledge-panel cards (bento grid) --- */
+.profile-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 0.9em;
+  margin-top: 0.5em;
 }
 
-.hero-links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0.4em 0.8em;
+.profile-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65em;
+  padding: 1.1em 1.2em;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
   transition: all 0.2s ease;
 }
 
-.hero-links a:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-light);
+/* Sizes for the varied bento layout */
+.profile-card--lg { grid-column: span 2; grid-row: span 2; }
+.profile-card--wide { grid-column: span 2; }
+
+.profile-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--brand-color, var(--accent));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
-.hero-links a svg {
-  width: 16px;
-  height: 16px;
+.profile-card:hover {
+  border-color: var(--brand-color, var(--accent));
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.profile-card:hover::before { opacity: 0.06; }
+
+.profile-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-light);
+  color: var(--brand-color, var(--accent));
+  flex: 0 0 auto;
+}
+
+.profile-card-icon svg {
+  width: 22px;
+  height: 22px;
   fill: currentColor;
+}
+
+.profile-card--lg .profile-card-icon {
+  width: 52px;
+  height: 52px;
+}
+.profile-card--lg .profile-card-icon svg { width: 30px; height: 30px; }
+
+.profile-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  margin-top: auto;
+}
+
+.profile-card-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.profile-card--lg .profile-card-label { font-size: 1.25rem; }
+
+.profile-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.profile-card-arrow {
+  position: absolute;
+  top: 1em;
+  right: 1.1em;
+  font-size: 1rem;
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.profile-card:hover .profile-card-arrow {
+  color: var(--brand-color, var(--accent));
+  transform: translate(2px, -2px);
+}
+
+/* Brand accent colors (fall back to theme accents so dark mode stays cohesive) */
+.profile-card--linkedin { --brand-color: #0a66c2; }
+.profile-card--github   { --brand-color: var(--text-primary); }
+.profile-card--medium   { --brand-color: #1a8917; }
+.profile-card--bookshelf { --brand-color: var(--heading-accent); }
+
+.profile-card--bookshelf .profile-card-icon {
+  background: var(--accent-light);
+  color: var(--heading-accent);
+}
+
+/* --- BookShelf card: auto-scrolling filmstrip "shelf" preview --- */
+.book-filmstrip {
+  display: block;
+  margin-top: 1.1em;
+  overflow-x: hidden;
+  /* soft fade on both edges so covers slide in/out gracefully */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+}
+
+.book-filmstrip-track {
+  display: flex;
+  gap: 0.7em;
+  width: max-content;
+  padding: 2px 0;
+}
+
+.book-spine {
+  flex: 0 0 auto;
+}
+
+.book-spine-cover {
+  display: block;
+  width: 62px;
+  height: 88px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  background: var(--bg-surface);
+  transition: transform 0.2s ease;
+}
+
+.profile-card:hover .book-spine-cover {
+  transform: translateY(-2px);
+}
+
+.book-spine-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+}
+
+/* Text-only spine when a book has no cover image yet */
+.book-spine-cover--placeholder {
+  display: flex;
+  align-items: flex-end;
+  padding: 0.5em;
+  background: linear-gradient(160deg, var(--accent-light), var(--bg-surface));
+  border: 1px solid var(--border);
+}
+
+.book-spine-title {
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--heading-accent);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Medium latest-post title can be long: clamp to keep the card tidy */
+.profile-card--medium .profile-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ============================================
@@ -1067,6 +1223,354 @@ img {
 }
 
 /* ============================================
+   BOOKSHELF
+   ============================================ */
+.bookshelf-intro {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 2em;
+  max-width: 75ch;
+}
+
+.bookshelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25em;
+}
+
+.book-card {
+  display: flex;
+  gap: 1em;
+  padding: 1.25em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.book-card:hover {
+  border-color: var(--card-hover-border);
+  border-left: 3px solid var(--heading-accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.book-card-cover {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 92px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.book-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+}
+
+.book-card-cover--placeholder,
+.book-header-cover--placeholder {
+  background: linear-gradient(135deg, var(--accent-light), var(--bg-surface));
+  border: 1px solid var(--border);
+}
+
+.book-card-body {
+  min-width: 0;
+}
+
+.book-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.2em;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.book-card:hover .book-card-title {
+  color: var(--accent);
+}
+
+.book-card-author {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0 0 0.55em;
+}
+
+.book-card-meta,
+.book-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  margin-bottom: 0.55em;
+}
+
+.book-status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2em 0.65em;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+
+.book-status--read,
+.book-status--finished {
+  background: var(--accent-secondary-light);
+  color: var(--accent-secondary-text);
+}
+
+.book-status--reading,
+.book-status--in-progress {
+  background: var(--accent-tertiary-light);
+  color: var(--accent-tertiary-text);
+}
+
+.book-rating {
+  font-size: 0.85rem;
+  color: var(--accent-tertiary);
+  letter-spacing: 0.05em;
+}
+
+.book-card-summary {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Breadcrumb --- */
+.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+.breadcrumb a {
+  color: var(--text-secondary);
+}
+
+.breadcrumb a:hover {
+  color: var(--accent);
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* --- Book page header --- */
+.book-header {
+  display: flex;
+  gap: 1.5em;
+  align-items: flex-start;
+  margin-bottom: 2em;
+  padding-bottom: 1.5em;
+  border-bottom: 1px solid var(--border);
+}
+
+.book-header-cover {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 138px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.book-header-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+}
+
+.book-title {
+  font-size: 1.8rem;
+  margin: 0 0 0.15em;
+}
+
+.book-author {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0 0 0.7em;
+}
+
+.book-summary {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0.3em 0 0;
+}
+
+/* View on Amazon button */
+.amazon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-top: 1em;
+  padding: 0.5em 1em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.amazon-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Coming-soon empty state on a book page */
+.book-empty {
+  text-align: center;
+  padding: 2.5em 1.5em;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  margin-bottom: 2em;
+}
+
+.book-empty-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--heading-accent);
+  margin: 0 0 0.4em;
+}
+
+.book-empty-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.book-section-heading {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--heading-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
+  padding: 0;
+  margin: 0 0 1em;
+}
+
+/* --- Chapter list --- */
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  margin-bottom: 2.5em;
+}
+
+.chapter-row {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  padding: 0.85em 1.15em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.chapter-row:hover {
+  border-color: var(--card-hover-border);
+  border-left: 3px solid var(--heading-accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(2px);
+}
+
+.chapter-index {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--heading-accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.chapter-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chapter-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.chapter-row:hover .chapter-title {
+  color: var(--accent);
+}
+
+.chapter-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15em;
+}
+
+.chapter-arrow {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+/* --- Back link --- */
+.book-back {
+  margin-top: 2.5em;
+  padding-top: 1.5em;
+  border-top: 1px solid var(--border);
+}
+
+.book-back-link {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.book-back-link:hover {
+  color: var(--accent);
+}
+
+.bookshelf-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
@@ -1145,15 +1649,40 @@ img {
   .external-card {
     padding: 0.75em 1em;
   }
+
+  .bookshelf-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .book-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1em;
+  }
+
+  .profile-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-card--lg {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+
+  .profile-card--wide {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 480px) {
-  .hero-links {
-    flex-direction: column;
+  .profile-cards {
+    grid-template-columns: 1fr;
   }
 
-  .hero-links a {
-    justify-content: center;
+  .profile-card--lg,
+  .profile-card--wide {
+    grid-column: span 1;
+    grid-row: span 1;
   }
 
   .post-card {

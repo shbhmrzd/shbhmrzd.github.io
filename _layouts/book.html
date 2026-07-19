@@ -1,0 +1,99 @@
+---
+layout: default
+---
+
+<article class="book-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ '/bookshelf' | relative_url }}">BookShelf</a>
+    <span class="breadcrumb-sep">&rsaquo;</span>
+    <span class="breadcrumb-current">{{ page.title | escape }}</span>
+  </nav>
+
+  <header class="book-header">
+    {%- if page.cover -%}
+    <div class="book-header-cover"><img src="{{ page.cover | relative_url }}" alt="Cover of {{ page.title | escape }}"></div>
+    {%- else -%}
+    <div class="book-header-cover book-header-cover--placeholder" aria-hidden="true"></div>
+    {%- endif -%}
+    <div class="book-header-info">
+      <h1 class="book-title">{{ page.title | escape }}</h1>
+      {%- if page.author -%}<p class="book-author">by {{ page.author | escape }}</p>{%- endif -%}
+      <div class="book-meta">
+        {%- if page.status -%}<span class="book-status book-status--{{ page.status | downcase | replace: ' ', '-' }}">{{ page.status }}</span>{%- endif -%}
+        {%- if page.rating -%}<span class="book-rating" title="{{ page.rating }} / 5">{% assign r = page.rating | times: 1 %}{% for i in (1..5) %}{% if i <= r %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>{%- endif -%}
+      </div>
+      {%- if page.summary -%}<p class="book-summary">{{ page.summary | escape }}</p>{%- endif -%}
+      {%- if page.amazon -%}
+      <a class="amazon-link" href="{{ page.amazon }}" target="_blank" rel="noopener">View on Amazon <span aria-hidden="true">&#8599;</span></a>
+      {%- endif -%}
+    </div>
+  </header>
+
+  {%- comment -%} Detect whether there are any inline notes (h2 headings) {%- endcomment -%}
+  {%- assign heading_count = content | split: "<h2" | size | minus: 1 -%}
+
+  <!-- Chapter notes list (if authored as separate files linked via page.chapters) -->
+  {%- if page.chapters -%}
+  <h2 class="book-section-heading">Chapter Notes</h2>
+  <div class="chapter-list">
+    {%- for chapter in page.chapters -%}
+    <a class="chapter-row" href="{{ chapter.url | relative_url }}">
+      <span class="chapter-index">{{ forloop.index }}</span>
+      <span class="chapter-info">
+        <span class="chapter-title">{{ chapter.title | escape }}</span>
+        {%- if chapter.note -%}<span class="chapter-note">{{ chapter.note | escape }}</span>{%- endif -%}
+      </span>
+      <span class="chapter-arrow">&rsaquo;</span>
+    </a>
+    {%- endfor -%}
+  </div>
+  {%- endif -%}
+
+  {%- if page.chapters == nil and heading_count == 0 -%}
+  <!-- Coming-soon empty state (no chapter notes yet) -->
+  <div class="book-empty">
+    <p class="book-empty-title">Notes coming soon</p>
+    <p class="book-empty-desc">I'm still reading this one. Chapter notes will appear here as I work through it.</p>
+  </div>
+  {%- else -%}
+  <!-- Inline notes (headings authored in the book markdown body) -->
+  <div class="book-content post-content e-content">
+    {{ content }}
+  </div>
+  {%- endif -%}
+
+  <div class="book-back">
+    <a class="book-back-link" href="{{ '/bookshelf' | relative_url }}">&larr; Back to BookShelf</a>
+  </div>
+</article>
+
+<script>
+(function() {
+  // Auto-build a "Chapter Notes" jump list from h2 headings in the inline body,
+  // only when no explicit chapter files are provided.
+  var hasExplicit = {% if page.chapters %}true{% else %}false{% endif %};
+  if (hasExplicit) return;
+
+  var content = document.querySelector('.book-content');
+  if (!content) return;
+  var headings = content.querySelectorAll('h2');
+  if (headings.length < 1) return;
+
+  headings.forEach(function(h, i) { if (!h.id) h.id = 'chapter-' + i; });
+
+  var listHtml = '<h2 class="book-section-heading">Chapter Notes</h2><div class="chapter-list">';
+  headings.forEach(function(h, i) {
+    listHtml += '<a class="chapter-row" href="#' + h.id + '">' +
+      '<span class="chapter-index">' + (i + 1) + '</span>' +
+      '<span class="chapter-info"><span class="chapter-title">' + h.textContent + '</span></span>' +
+      '<span class="chapter-arrow">&rsaquo;</span></a>';
+  });
+  listHtml += '</div>';
+
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = listHtml;
+  content.parentNode.insertBefore(wrapper, content);
+})();
+</script>

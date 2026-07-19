@@ -34,9 +34,19 @@ titles_from_headings:
   strip_title: true
   collections: true
 
+collections:
+  books:
+    output: true
+    permalink: /books/:path/
+
 defaults:
   - scope:
       path: ""
-      type: post
+      type: posts
     values:
       tags: Other
+  - scope:
+      path: ""
+      type: books
+    values:
+      layout: book
