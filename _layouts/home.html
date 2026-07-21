@@ -6,66 +6,85 @@ layout: default
   <h1>Hi, I'm Shubham</h1>
   <p class="tagline">Software developer writing about systems internals, distributed systems, and things I learn along the way.</p>
   {%- assign shelf_books = site.books | sort: "order" -%}
-  <div class="profile-cards">
-    <a class="profile-card profile-card--bookshelf profile-card--lg" href="{{ '/bookshelf' | relative_url }}" aria-label="BookShelf reading notes">
-      <span class="profile-card-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 3h5a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H4zm16 0h-5a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H20z"/></svg>
-      </span>
-      <span class="profile-card-body">
-        <span class="profile-card-label">BookShelf</span>
-        <span class="profile-card-desc">Chapter notes from the books I've read.</span>
-        {%- if shelf_books.size > 0 -%}
-        <span class="book-filmstrip" data-book-filmstrip>
-          <span class="book-filmstrip-track">
-            {%- for b in shelf_books -%}
-            <span class="book-spine" title="{{ b.title | escape }}{% if b.author %} by {{ b.author | escape }}{% endif %}">
-              {%- if b.cover -%}
-              <span class="book-spine-cover"><img src="{{ b.cover | relative_url }}" alt="Cover of {{ b.title | escape }}"></span>
-              {%- else -%}
-              <span class="book-spine-cover book-spine-cover--placeholder">
-                <span class="book-spine-title">{{ b.title | escape }}</span>
-              </span>
-              {%- endif -%}
-            </span>
-            {%- endfor -%}
-          </span>
-        </span>
-        {%- endif -%}
-      </span>
-      <span class="profile-card-arrow" aria-hidden="true">&#8594;</span>
-    </a>
+  {%- assign shelf_papers = site.posts | where_exp: "p", "p.paper_url" -%}
 
-    <a class="profile-card profile-card--linkedin" href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener" aria-label="LinkedIn profile">
-      <span class="profile-card-icon">
+  <!-- Profile link strip (compact, secondary) -->
+  <div class="profile-strip">
+    <a class="profile-chip profile-chip--linkedin" href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener" aria-label="LinkedIn profile">
+      <span class="profile-chip-icon">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
       </span>
-      <span class="profile-card-body">
-        <span class="profile-card-label">LinkedIn</span>
-        <span class="profile-card-desc">Connect on LinkedIn</span>
-      </span>
-      <span class="profile-card-arrow" aria-hidden="true">&#8599;</span>
+      <span class="profile-chip-label">LinkedIn</span>
+      <span class="profile-chip-arrow" aria-hidden="true">&#8599;</span>
     </a>
 
-    <a class="profile-card profile-card--github" href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" aria-label="GitHub profile" data-gh-user="{{ site.github_username }}">
-      <span class="profile-card-icon">
+    <a class="profile-chip profile-chip--github" href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" aria-label="GitHub profile" data-gh-user="{{ site.github_username }}">
+      <span class="profile-chip-icon">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       </span>
-      <span class="profile-card-body">
-        <span class="profile-card-label">GitHub</span>
-        <span class="profile-card-desc" data-gh-desc>@{{ site.github_username }} &middot; code &amp; projects</span>
-      </span>
-      <span class="profile-card-arrow" aria-hidden="true">&#8599;</span>
+      <span class="profile-chip-label" data-gh-desc>GitHub</span>
+      <span class="profile-chip-arrow" aria-hidden="true">&#8599;</span>
     </a>
 
-    <a class="profile-card profile-card--medium profile-card--wide" href="https://shbhmrzd.medium.com" target="_blank" rel="noopener" aria-label="Medium articles" data-medium-feed="https://medium.com/feed/@shbhmrzd">
-      <span class="profile-card-icon">
+    <a class="profile-chip profile-chip--medium" href="https://shbhmrzd.medium.com" target="_blank" rel="noopener" aria-label="Medium articles" data-medium-feed="https://medium.com/feed/@shbhmrzd">
+      <span class="profile-chip-icon">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
       </span>
-      <span class="profile-card-body">
-        <span class="profile-card-label">Medium</span>
-        <span class="profile-card-desc" data-medium-desc>Published articles</span>
+      <span class="profile-chip-label" data-medium-desc>Medium</span>
+      <span class="profile-chip-arrow" aria-hidden="true">&#8599;</span>
+    </a>
+  </div>
+
+  <!-- Content showcase cards (primary) -->
+  <div class="content-cards">
+    <a class="content-card content-card--bookshelf" href="{{ '/bookshelf' | relative_url }}" aria-label="BookShelf reading notes">
+      <span class="content-card-head">
+        <span class="content-card-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 3h5a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H4zm16 0h-5a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H20z"/></svg>
+        </span>
+        <span class="content-card-label">BookShelf</span>
       </span>
-      <span class="profile-card-arrow" aria-hidden="true">&#8599;</span>
+      <span class="content-card-desc">Chapter notes from the books I've read.</span>
+      {%- if shelf_books.size > 0 -%}
+      <span class="book-filmstrip" data-book-filmstrip>
+        <span class="book-filmstrip-track">
+          {%- for b in shelf_books -%}
+          <span class="book-spine" title="{{ b.title | escape }}{% if b.author %} by {{ b.author | escape }}{% endif %}">
+            {%- if b.cover -%}
+            <span class="book-spine-cover"><img src="{{ b.cover | relative_url }}" alt="Cover of {{ b.title | escape }}"></span>
+            {%- else -%}
+            <span class="book-spine-cover book-spine-cover--placeholder">
+              <span class="book-spine-title">{{ b.title | escape }}</span>
+            </span>
+            {%- endif -%}
+          </span>
+          {%- endfor -%}
+        </span>
+      </span>
+      {%- endif -%}
+      <span class="content-card-cta">Browse the shelf <span aria-hidden="true">&#8594;</span></span>
+    </a>
+
+    <a class="content-card content-card--papers" href="{{ '/whitepapers' | relative_url }}" aria-label="White Papers reading notes">
+      <span class="content-card-head">
+        <span class="content-card-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 2h8l4 4v16H6zm8 0v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <span class="content-card-label">White Papers</span>
+      </span>
+      <span class="content-card-desc">Whitepapers and research I've read, with key takeaways.</span>
+      {%- if shelf_papers.size > 0 -%}
+      <span class="paper-preview">
+        {%- for p in shelf_papers limit: 3 -%}
+        <span class="paper-preview-row">
+          <span class="paper-preview-dot" aria-hidden="true"></span>
+          <span class="paper-preview-title">{{ p.paper_title | default: p.title | escape }}</span>
+        </span>
+        {%- endfor -%}
+        <span class="paper-preview-count">{{ shelf_papers.size }} paper{% if shelf_papers.size != 1 %}s{% endif %}</span>
+      </span>
+      {%- endif -%}
+      <span class="content-card-cta">Browse the papers <span aria-hidden="true">&#8594;</span></span>
     </a>
   </div>
 

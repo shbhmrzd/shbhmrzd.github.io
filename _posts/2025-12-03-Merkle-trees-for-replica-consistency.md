@@ -4,6 +4,9 @@ title: "Merkle Trees: Efficient Replica Consistency Detection in Distributed Sys
 date: 2025-12-03
 categories: [distributed-systems, algorithms, databases]
 tags: [merkle-trees, dynamodb, consistency, replication]
+paper_title: "Dynamo: Amazon's Highly Available Key-value Store"
+paper_url: "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf"
+paper_source: "DeCandia et al., SOSP 2007"
 ---
 
 ![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fdistributed-systems%2Falgorithms%2Fdatabases%2F2025%2F12%2F03%2FMerkle-trees-for-replica-consistency.html&label=&icon=github&color=%23198754&message=&style=flat&tz=UTC)
