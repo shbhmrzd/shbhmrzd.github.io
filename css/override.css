@@ -428,21 +428,87 @@ img {
   max-width: 600px;
 }
 
-/* --- Profile knowledge-panel cards (bento grid) --- */
-.profile-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 0.9em;
+/* --- Profile link strip (compact pills) + content showcase cards --- */
+.profile-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
   margin-top: 0.5em;
 }
 
-.profile-card {
+.profile-chip {
+  --brand-color: var(--accent);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.18s ease;
+}
+
+.profile-chip:hover {
+  border-color: var(--brand-color);
+  color: var(--brand-color);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.profile-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--brand-color);
+  flex: 0 0 auto;
+}
+
+.profile-chip-icon svg { width: 16px; height: 16px; fill: currentColor; }
+
+.profile-chip-label {
+  white-space: nowrap;
+  max-width: 26ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-chip-arrow {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.profile-chip:hover .profile-chip-arrow {
+  color: var(--brand-color);
+  transform: translate(1px, -1px);
+}
+
+.profile-chip--linkedin { --brand-color: #0a66c2; }
+.profile-chip--github   { --brand-color: var(--text-primary); }
+.profile-chip--medium   { --brand-color: #1a8917; }
+
+/* Content showcase cards: two equal, primary emphasis */
+.content-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1em;
+  margin-top: 1em;
+}
+
+.content-card {
+  --brand-color: var(--heading-accent);
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.65em;
-  padding: 1.1em 1.2em;
+  gap: 0.6em;
+  padding: 1.4em 1.5em;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-primary);
@@ -451,97 +517,260 @@ img {
   transition: all 0.2s ease;
 }
 
-/* Sizes for the varied bento layout */
-.profile-card--lg { grid-column: span 2; grid-row: span 2; }
-.profile-card--wide { grid-column: span 2; }
-
-.profile-card::before {
+.content-card::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--brand-color, var(--accent));
+  background: var(--brand-color);
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;
 }
 
-.profile-card:hover {
-  border-color: var(--brand-color, var(--accent));
+.content-card:hover {
+  border-color: var(--brand-color);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
-.profile-card:hover::before { opacity: 0.06; }
+.content-card:hover::before { opacity: 0.05; }
 
-.profile-card-icon {
+.content-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65em;
+}
+
+.content-card-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-sm);
   background: var(--accent-light);
-  color: var(--brand-color, var(--accent));
+  color: var(--brand-color);
   flex: 0 0 auto;
 }
 
-.profile-card-icon svg {
-  width: 22px;
-  height: 22px;
-  fill: currentColor;
-}
+.content-card-icon svg { width: 26px; height: 26px; fill: currentColor; }
 
-.profile-card--lg .profile-card-icon {
-  width: 52px;
-  height: 52px;
-}
-.profile-card--lg .profile-card-icon svg { width: 30px; height: 30px; }
-
-.profile-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15em;
-  margin-top: auto;
-}
-
-.profile-card-label {
-  font-size: 1rem;
-  font-weight: 600;
+.content-card-label {
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
-.profile-card--lg .profile-card-label { font-size: 1.25rem; }
-
-.profile-card-desc {
-  font-size: 0.8rem;
+.content-card-desc {
+  font-size: 0.88rem;
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-.profile-card-arrow {
-  position: absolute;
-  top: 1em;
-  right: 1.1em;
-  font-size: 1rem;
+.content-card-cta {
+  margin-top: auto;
+  padding-top: 0.4em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--brand-color);
+  transition: transform 0.2s ease;
+}
+
+.content-card:hover .content-card-cta { transform: translateX(3px); }
+
+.content-card--bookshelf { --brand-color: var(--heading-accent); }
+.content-card--papers    { --brand-color: var(--accent); }
+
+/* White Papers card: compact preview list */
+.paper-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin: 0.3em 0 0.2em;
+}
+
+.paper-preview-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55em;
+}
+
+.paper-preview-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-color);
+  transform: translateY(-1px);
+}
+
+.paper-preview-title {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.paper-preview-count {
+  margin-top: 0.15em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* --- White Papers: listing grid + detail page --- */
+.paper-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  margin-top: 1em;
+}
+
+.paper-card {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  padding: 1.1em 1.3em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.paper-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.paper-card-body { flex: 1 1 auto; min-width: 0; }
+
+.paper-card-title {
+  margin: 0 0 0.15em;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.paper-card-authors {
+  margin: 0 0 0.4em;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.paper-card-meta,
+.paper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 0.4em;
+}
+
+.paper-venue {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.paper-year {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.paper-card-summary {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.paper-card-arrow {
+  flex: 0 0 auto;
+  font-size: 1.4rem;
   color: var(--text-muted);
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.profile-card:hover .profile-card-arrow {
-  color: var(--brand-color, var(--accent));
-  transform: translate(2px, -2px);
+.paper-card:hover .paper-card-arrow {
+  color: var(--accent);
+  transform: translateX(3px);
 }
 
-/* Brand accent colors (fall back to theme accents so dark mode stays cohesive) */
-.profile-card--linkedin { --brand-color: #0a66c2; }
-.profile-card--github   { --brand-color: var(--text-primary); }
-.profile-card--medium   { --brand-color: #1a8917; }
-.profile-card--bookshelf { --brand-color: var(--heading-accent); }
+/* Paper detail page */
+.paper-header {
+  margin: 1.5em 0 1em;
+}
 
-.profile-card--bookshelf .profile-card-icon {
-  background: var(--accent-light);
-  color: var(--heading-accent);
+.paper-title {
+  margin: 0 0 0.25em;
+  line-height: 1.25;
+}
+
+.paper-authors {
+  margin: 0 0 0.6em;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.paper-summary {
+  margin: 0.6em 0 1em;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.paper-card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  margin-top: 0.7em;
+}
+
+.post-content .paper-link,
+.paper-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 1em;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.post-content .paper-link--primary,
+.paper-link--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.paper-link--primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.post-content .paper-link--ghost,
+.paper-link--ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.paper-link--ghost:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 /* --- BookShelf card: auto-scrolling filmstrip "shelf" preview --- */
@@ -576,9 +805,11 @@ img {
   transition: transform 0.2s ease;
 }
 
-.profile-card:hover .book-spine-cover {
+.content-card:hover .book-spine-cover {
   transform: translateY(-2px);
 }
+
+.book-filmstrip { margin-top: 0.3em; }
 
 .book-spine-cover img {
   width: 100%;
@@ -607,13 +838,8 @@ img {
   overflow: hidden;
 }
 
-/* Medium latest-post title can be long: clamp to keep the card tidy */
-.profile-card--medium .profile-card-desc {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* Medium latest-post title can be long: clamp the chip label */
+.profile-chip--medium .profile-chip-label { max-width: 40ch; }
 
 /* ============================================
    HOMEPAGE: Category Filter Pills
@@ -1660,31 +1886,12 @@ img {
     gap: 1em;
   }
 
-  .profile-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .profile-card--lg {
-    grid-column: span 2;
-    grid-row: span 1;
-  }
-
-  .profile-card--wide {
-    grid-column: span 2;
+  .content-cards {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .profile-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-card--lg,
-  .profile-card--wide {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
   .post-card {
     padding: 1.15em;
   }

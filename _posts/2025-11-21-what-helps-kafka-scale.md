@@ -3,6 +3,9 @@ layout: post
 title: "How Does Kafka Scale for Log Processing?"
 date: 2025-11-21
 categories: [distributed-systems, kafka]
+paper_title: "Kafka: a Distributed Messaging System for Log Processing"
+paper_url: "https://notes.stephenholiday.com/Kafka.pdf"
+paper_source: "Kreps et al., NetDB 2011"
 ---
 
 ![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2F2025%2F11%2F22%2Fkafka-connect-101.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
