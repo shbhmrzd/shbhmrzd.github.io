@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="350" viewBox="0 0 720 350" role="img" aria-labelledby="title description">
+  <title id="title">ZooKeeper znode hierarchy</title>
+  <desc id="description">The root znode, slash, has two children: /a and /b. The /a znode has two children: /a/a1 and /a/a2.</desc>
+  <rect width="720" height="350" rx="12" fill="#f7f9fb"/>
+  <g fill="none" stroke="#8297a8" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M360 88 V116 H240 V144 M360 116 H540 V144"/>
+    <path d="M240 200 V228 H140 V256 M240 228 H340 V256"/>
+  </g>
+  <g stroke-width="1.5">
+    <rect x="300" y="32" width="120" height="56" rx="8" fill="#eef5fb" stroke="#356b98"/>
+    <g fill="#fff" stroke="#9aabb8">
+      <rect x="180" y="144" width="120" height="56" rx="8"/>
+      <rect x="480" y="144" width="120" height="56" rx="8"/>
+      <rect x="70" y="256" width="140" height="56" rx="8"/>
+      <rect x="270" y="256" width="140" height="56" rx="8"/>
+    </g>
+  </g>
+  <g fill="#243746" font-family="Menlo, Consolas, monospace" font-size="23" text-anchor="middle" dominant-baseline="middle">
+    <text x="360" y="60">/</text>
+    <text x="240" y="172">/a</text>
+    <text x="540" y="172">/b</text>
+    <text x="140" y="284">/a/a1</text>
+    <text x="340" y="284">/a/a2</text>
+  </g>
+</svg>

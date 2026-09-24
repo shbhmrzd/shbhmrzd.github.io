@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="490" viewBox="0 0 900 490" role="img" aria-labelledby="title desc">
+  <title id="title">ZooKeeper ensemble with three servers</title>
+  <desc id="desc">A leader and two followers each hold a replica of the same znode tree. The leader replicates ordered updates to both followers using ZAB. Three clients each connect to one server.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#356b98"/></marker>
+    <g id="tree" fill="#fff" stroke="#526575" stroke-width="2">
+      <path d="M0 0 L-42 36 M0 0 L42 36 M-42 36 L-65 72 M-42 36 L-19 72" fill="none"/>
+      <circle r="7"/><circle cx="-42" cy="36" r="7"/><circle cx="42" cy="36" r="7"/><circle cx="-65" cy="72" r="7"/><circle cx="-19" cy="72" r="7"/>
+    </g>
+  </defs>
+  <rect width="900" height="490" rx="12" fill="#fff"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#243746" text-anchor="middle">
+    <rect x="24" y="20" width="852" height="335" rx="12" fill="#f7f9fb" stroke="#9aabb8" stroke-width="1.5"/>
+    <text x="450" y="52" font-size="23" font-weight="bold">ZooKeeper ensemble</text>
+    <text x="450" y="85" font-size="16" fill="#356b98">Ordered updates replicated through ZAB</text>
+    <path d="M450 136 V106 H176 V136 M450 106 H724 V136" fill="none" stroke="#356b98" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M176 106 V136" fill="none" stroke="#356b98" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="66" y="140" width="220" height="190" rx="8" fill="#fff" stroke="#9aabb8"/>
+    <rect x="340" y="140" width="220" height="190" rx="8" fill="#eef5fb" stroke="#356b98" stroke-width="2"/>
+    <rect x="614" y="140" width="220" height="190" rx="8" fill="#fff" stroke="#9aabb8"/>
+    <g font-size="20" font-weight="bold"><text x="176" y="172">Follower</text><text x="450" y="172">Leader</text><text x="724" y="172">Follower</text></g>
+    <use href="#tree" x="176" y="205"/><use href="#tree" x="450" y="205"/><use href="#tree" x="724" y="205"/>
+    <g font-size="15"><text x="176" y="312">Full data-tree replica</text><text x="450" y="312">Full data-tree replica</text><text x="724" y="312">Full data-tree replica</text></g>
+    <g stroke="#526575" stroke-width="2"><path d="M176 330 V413"/><path d="M450 330 V413"/><path d="M724 330 V413"/></g>
+    <g font-size="14"><rect x="114" y="370" width="124" height="24" fill="#fff"/><text x="176" y="387">Client connection</text><rect x="388" y="370" width="124" height="24" fill="#fff"/><text x="450" y="387">Client connection</text><rect x="662" y="370" width="124" height="24" fill="#fff"/><text x="724" y="387">Client connection</text></g>
+    <g fill="#fff" stroke="#9aabb8"><rect x="111" y="413" width="130" height="48" rx="7"/><rect x="385" y="413" width="130" height="48" rx="7"/><rect x="659" y="413" width="130" height="48" rx="7"/></g>
+    <g font-size="18"><text x="176" y="443">Client 1</text><text x="450" y="443">Client 2</text><text x="724" y="443">Client 3</text></g>
+  </g>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img"><title>ZooKeeper write path</title><rect width="960" height="640" rx="12" fill="#f7f9fb"/>
+<text x="28" y="50" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="bold">ZooKeeper write path</text>
+<rect x="76" y="84" width="808" height="72" rx="9" fill="#eef5fb" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="114" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">1. Client sends a write</text>
+<text x="94" y="142" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">The receiving server forwards it to the leader.</text>
+<polyline points="480,157 480,177" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480,177 475.6503446588877,167.99552897647322 484.3496553411123,167.99552897647322" fill="#356b98"/>
+<rect x="76" y="178" width="808" height="72" rx="9" fill="#ffffff" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="208" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">2. Leader prepares the transaction</text>
+<text x="94" y="236" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Validate the request and compute the resulting state.</text>
+<polyline points="480,251 480,271" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480,271 475.6503446588877,261.9955289764732 484.3496553411123,261.9955289764732" fill="#356b98"/>
+<rect x="76" y="272" width="808" height="72" rx="9" fill="#eef5fb" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="302" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">3. ZAB replicates the proposal</text>
+<text x="94" y="330" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Servers log the proposal before acknowledging it.</text>
+<polyline points="480,345 480,365" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480,365 475.6503446588877,355.9955289764732 484.3496553411123,355.9955289764732" fill="#356b98"/>
+<rect x="76" y="366" width="808" height="72" rx="9" fill="#ffffff" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="396" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">4. A majority quorum acknowledges</text>
+<text x="94" y="424" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">The leader commits the transaction.</text>
+<polyline points="480,439 480,459" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480,459 475.6503446588877,449.9955289764732 484.3496553411123,449.9955289764732" fill="#356b98"/>
+<rect x="76" y="460" width="808" height="72" rx="9" fill="#eef5fb" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="490" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">5. Servers apply the committed transaction in order</text>
+<text x="94" y="518" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">The receiving server applies it, triggers relevant watches, and replies.</text>
+<text x="76" y="587" fill="#526575" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="normal">A reply does not require every replica to have caught up.</text>
+</svg>
