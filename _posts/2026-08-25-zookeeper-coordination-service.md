@@ -13,9 +13,9 @@ paper_source: "Hunt et al., USENIX ATC 2010"
 
 # ZooKeeper: A Coordination Service Built From a Handful of Primitives
 
-I kept running into ZooKeeper as a dependency of other systems - Hadoop uses it, Kafka used it for years to elect its controller and hold cluster metadata, and plenty of internal services lean on it for leader election. I never really understood what it does on its own, only that it "coordinates" things. So I went back and read the original [ZooKeeper paper](https://www.usenix.org/legacy/event/atc10/tech/full_papers/Hunt.pdf) from 2010. These are my notes from that read.
+I kept running into ZooKeeper as a dependency of other systems - Hadoop uses it, Kafka used it for years to elect its controller and hold cluster metadata, and plenty of internal services lean on it for leader election. To understand how ZooKeeper helps solve these coordination problems, I read the original [ZooKeeper paper](https://www.usenix.org/legacy/event/atc10/tech/full_papers/Hunt.pdf) from 2010. These are my notes from that read.
 
-The thing that surprised me is how small ZooKeeper is. It exposes a tree of small data nodes, a small API, and two ordering guarantees. Client libraries combine these primitives to implement configuration management, group membership, locks, and barriers. This post walks through the primitives and recipes described in the paper.
+The paper describes how ZooKeeper’s data model, API, and ordering guarantees can be used to implement configuration management, group membership, locks, and barriers. This post walks through the primitives and recipes described in the paper.
 
 If you want the deeper version of any of this, read the paper. It is short and very readable.
 
@@ -33,6 +33,10 @@ ZooKeeper provides a common set of data and ordering primitives for all six. The
 
 A ZooKeeper deployment is an **ensemble** - a group of servers, usually an odd number like 3, 5, or 7. One server acts as the **leader** and the rest are **followers**. Write operations are ordered by the leader and replicated using ZooKeeper Atomic Broadcast, or ZAB. Reads are served locally by whichever server the client is talking to. More on why that split matters later.
 
+![ZooKeeper ensemble with one leader, two followers, and a full data-tree replica on each server. Each client connects to one server.](/assets/img/zookeeper/ensemble.svg)
+
+*A ZooKeeper ensemble. Each server holds a replica of the data tree, and clients connect to individual servers.*
+
 Clients talk to ZooKeeper through a client library. When a client first connects, ZooKeeper establishes a **session** and hands back a session handle that the client uses for all future communication.
 
 Each session has a configurable timeout. If ZooKeeper does not hear a request or a heartbeat from the client within the timeout, it treats the client as faulty and ends the session. A session can end two ways:
@@ -48,13 +52,7 @@ ZooKeeper keeps a persistent, bidirectional TCP connection between client and se
 
 ZooKeeper stores everything in an in-memory tree of nodes called **znodes**. Its namespace looks like a file system.
 
-```
-              /
-            /   \
-          /a     /b
-         /  \
-      /a/a1  /a/a2
-```
+![Znode hierarchy: the root has children /a and /b; /a has children /a/a1 and /a/a2.](/assets/img/zookeeper/data-model.svg)
 
 You address a znode with a Unix-style path. The leftmost leaf above is `/a/a1`. Every server holds a full copy of this tree in memory, which is what lets reads be served locally without talking to anyone else.
 
@@ -104,9 +102,9 @@ While connected, the client uses the cached value until its watch fires. It read
 
 ---
 
-## The APIs
+## Client API
 
-The API surface is small. These are the ones worth knowing.
+The paper describes the following API operations.
 
 **`create(path, data, flags)`** creates a znode at `path`, stores `data` in it, and returns the name of the new znode. The flags pick the type (regular or ephemeral) and whether to set the sequential flag.
 
@@ -118,15 +116,13 @@ The API surface is small. These are the ones worth knowing.
 
 **`setData(path, data, version)`** writes data when the supplied `version` matches the znode's current version. A successful write increments the version, so other writes carrying the old version fail. This provides a compare-and-set operation across clients.
 
-Two more classifications matter.
-
-Every API has a **synchronous** and an **asynchronous** form. The synchronous form blocks until the operation completes. The asynchronous form lets a client have many outstanding operations while it does other work. This matters in the configuration example, where the leader updates 5,000 znodes.
+Every API has a **synchronous** and an **asynchronous** form. The synchronous form blocks until the operation completes. The asynchronous form lets a client have many outstanding operations while it does other work.
 
 APIs also split into **reads** and **writes**. `create`, `delete`, and `setData` update state. `exists`, `getData`, and `getChildren` are reads. The split lines up with the architecture: all state-updating requests are served by the leader, while all reads are served locally by whichever replica the client is connected to.
 
 ---
 
-## The two guarantees
+## Ordering Guarantees
 
 The recipes in the paper rest on two ordering guarantees.
 
@@ -140,7 +136,7 @@ The recipes combine these guarantees with ephemeral and sequential znodes and wa
 
 ---
 
-## Wait-free, and why the API is so small
+## Wait-Free Operations
 
 The paper's title is "Wait-free coordination." Here, **wait-free** means a ZooKeeper operation does not wait for another client to take some action. For example, the API has no lock-acquisition call that remains blocked until the current lock holder releases it. Network failures or the loss of a quorum can still delay or fail an operation.
 
@@ -165,6 +161,14 @@ Why this is correct comes straight from the FIFO client ordering guarantee. Ever
 
 There is one more race to handle. A worker may see the old ready znode just before the new leader deletes it, and then start reading configuration while it is being changed. The worker must read ready with a watch. ZooKeeper guarantees that the worker receives the notification for the deletion before it can observe any of the configuration state written after that deletion. The worker can then stop using the configuration until ready is created again.
 
+![Animation of a completed configuration update: the leader deletes ready, workers receive the watch notification and wait, the leader updates the configuration znodes, and recreates ready so workers can read the completed configuration.](/assets/img/zookeeper/configuration-update.gif)
+
+*Completed update. Three configuration znodes are shown to illustrate the batch; the leader creates ready after all updates.*
+
+![Animation of a leader crash during a configuration update: only part of the configuration is updated, ready remains absent, and workers continue waiting.](/assets/img/zookeeper/configuration-update-failure.gif)
+
+*Leader failure during the batch. The ready marker remains absent, so workers do not use the incomplete configuration.*
+
 Those config updates can be pipelined asynchronously. The paper gives the concrete numbers: a change operation has a latency on the order of 2 milliseconds, so a leader that updates 5,000 config znodes takes about 10 seconds when it sends them one after another. The same updates finish in under a second when issued asynchronously. FIFO client ordering is preserved while the writes are outstanding.
 
 ### Reads can be stale
@@ -187,6 +191,8 @@ The client creates a rendezvous znode `/zr` and passes its path to the master an
 
 The client can create `/zr` as an ephemeral znode. The master and workers watch for its deletion and clean themselves up when the client's session ends.
 
+![Rendezvous animation: the client creates /zr, workers read it with a watch, the master writes its address and port, and workers read those details and connect.](/assets/img/zookeeper/rendezvous.gif)
+
 ---
 
 ## Recipe: group membership
@@ -198,6 +204,8 @@ Designate a znode `/zg` to represent the group. When a process starts, it create
 Once its child exists, a process continues with its work. If it shuts down cleanly, closes its session, or remains disconnected beyond the session timeout, ZooKeeper removes its ephemeral node. A crashed process can remain in the group until its session expires.
 
 A process reads the group by calling `getChildren("/zg")`. To monitor members joining or leaving, it sets a watch on `/zg` and refreshes the group information when the watch fires. The next `getChildren` call sets a new watch.
+
+![Group membership animation: processes register ephemeral children; after a process crashes, its child remains until session expiration, then a watching process refreshes the membership list.](/assets/img/zookeeper/group-membership.gif)
 
 ---
 
@@ -214,6 +222,8 @@ The paper points out two limitations with this recipe.
 The first is the **herd effect**. Imagine a crowd of clients all waiting on the lock. When it is released, every one of them gets the notification and rushes to create the znode at once. Only one can win, but all of them woke up and contended for it. That is a lot of wasted work and it gets worse as the crowd grows.
 
 The second is that this only gives you exclusive locking. If you want a read/write lock, where many readers can hold the lock at once but a writer needs exclusive access, this design cannot express it.
+
+![Simple lock animation: releasing the lock wakes both waiting clients; both attempt create, one succeeds, and the other waits again.](/assets/img/zookeeper/simple-lock.gif)
 
 ---
 
@@ -232,12 +242,7 @@ create("/zl/lock-", ephemeral=true, sequential=true)
 
 Two other clients have already created `/zl/lock-1` and `/zl/lock-2`, so they are ahead in line. `lock-1` holds the lock and `lock-2` is waiting. Creating a znode adds the client to the queue. The client holds the lock once its znode has the lowest sequence number.
 
-```
-/zl
- ├── lock-1   <- holds the lock
- ├── lock-2   <- watches lock-1
- └── lock-3   <- watches lock-2   (client 3 is here)
-```
+![Lock queue under /zl: lock-1 holds the lock, lock-2 watches lock-1, and lock-3 watches lock-2.](/assets/img/zookeeper/queued-lock.svg)
 
 So client 3 does this:
 
@@ -251,6 +256,8 @@ Each znode is watched by the client immediately behind it, so one client wakes u
 When the watched node `lock-2` disappears, client 3 gets notified and starts again from `getChildren`. It acquires the lock when `lock-3` has the lowest sequence number.
 
 The client releases the lock by deleting its own znode. ZooKeeper deletes the znode if the client's session expires. Since every lock request is represented by a child of `/zl`, listing the children also shows the clients waiting for the lock.
+
+![Predecessor-watch animation: deleting lock-1 wakes client 2; it rechecks and acquires the lock. Client 3 stays waiting until lock-2 is deleted, then rechecks and acquires.](/assets/img/zookeeper/queued-lock.gif)
 
 ---
 
@@ -267,13 +274,7 @@ Readers can run concurrently until a lower-numbered write request is present. Wr
 
 The implementation extends the previous lock recipe. It uses the same lock znode `/zl` and ephemeral-sequential children. Read requests are prefixed `RL-` and write requests `WL-`.
 
-```
-/zl
- ├── WL-1
- ├── RL-2
- ├── RL-3
- └── WL-4
-```
+![Read/write lock queue under /zl: WL-1 holds the write lock; RL-2 and RL-3 watch WL-1; WL-4 watches RL-3.](/assets/img/zookeeper/read-write-lock.svg)
 
 For either lock type, the client first creates its ephemeral-sequential znode. It then follows the relevant procedure below.
 
@@ -299,6 +300,8 @@ Deleting a write znode can notify several readers. All of them may now hold the 
 
 The client releases either lock by deleting its znode. Session expiration provides the same cleanup as in the exclusive-lock recipe.
 
+![Read/write lock animation: the first writer releases, two readers proceed together, and the next writer waits until both earlier readers have finished.](/assets/img/zookeeper/read-write-lock.gif)
+
 ---
 
 ## Recipe: double barrier
@@ -308,6 +311,8 @@ A double barrier synchronizes both the start and the end of a computation. The p
 Each process creates a child under `/b` when it enters. The process that satisfies the threshold creates `/b/ready`. Other processes watch for that znode and begin their work after it appears.
 
 When a process finishes, it deletes its child from `/b`. Processes leave the barrier after all participant znodes have been removed. They watch particular child znodes and check the exit condition when those children disappear. This spreads the watches across the participant znodes instead of having every process watch the same child.
+
+![Double-barrier animation: processes register and wait for ready, begin computing once the entry condition is met, remove their children on completion, and leave after all participant children are gone.](/assets/img/zookeeper/double-barrier.gif)
 
 ---
 
@@ -323,37 +328,13 @@ Every server can handle requests, but how a request is handled depends on whethe
 
 **Reads** are answered from the server's local in-memory database. They avoid the agreement protocol and disk activity used by writes.
 
-```
-read request
-client ─────────────► server ─────► local in-memory DB ─────► reply (+ zxid)
-                      (local read)
-```
+![Read path: the client sends a request to its server, the server reads its local in-memory replica, and replies with the result and zxid.](/assets/img/zookeeper/read-path.svg)
 
 Each read is tagged with the **zxid** (ZooKeeper transaction ID) reflecting the last transaction that server has seen. This local read path is why ZooKeeper does so well on read-heavy workloads.
 
 **Writes** are more involved because they change state across the whole ensemble. When a server receives a write, it forwards the request to the leader, since only the leader assigns the global write order. The leader validates it, turns it into a transaction, and broadcasts it. The whole path looks like this:
 
-```
-        write request
-client ───────────────► server it is connected to
-                             │  forwards to leader
-                             ▼
-                          leader
-                             │  1. validate (e.g. version check on setData)
-                             │  2. compute the resulting state
-                             │  3. turn it into a transaction (absolute values)
-                             ▼
-                   ZAB proposal to all followers
-             ┌───────────────┼───────────────┐
-             ▼               ▼               ▼
-         follower        follower        follower
-             └────── ack ────┴──── ack ──────┘
-                             │  majority quorum acks
-                             ▼
-              commit after a quorum has acknowledged
-                     → replicas apply the transaction in order
-                     → receiving server applies it, fires watches, and replies
-```
+![Write path: the server forwards the request to the leader, which prepares and broadcasts a transaction. A quorum logs and acknowledges it; the transaction commits, and the receiving server applies it and replies.](/assets/img/zookeeper/write-path.svg)
 
 A few details on that path. The leader validates first - for a conditional `setData`, it checks the supplied version against the znode's current version. If valid, it turns the request into a transaction, for example a `setData` transaction carrying the new data, version, and timestamp. If there is an error, like a version mismatch or a missing znode, it generates an error transaction instead.
 
@@ -373,17 +354,7 @@ These snapshots are **fuzzy**. ZooKeeper takes them without locking the database
 
 Here is the paper's own example. Two znodes `/foo` and `/goo` start at values `f1` and `g1`, both version 1, when the snapshot begins. Then three transactions arrive while the scan is running:
 
-```
-transactions:   setData /foo -> f2, v2
-                setData /goo -> g2, v2
-                setData /foo -> f3, v3
-
-fuzzy scan timeline (depth-first, no lock):
-   reads /goo ──────────────────────────────────► reads /foo
-      │  (before /goo's write, so it sees g1)         │  (after both /foo writes, so it sees f3)
-      ▼                                               ▼
-   snapshot on disk:   /foo = f3, v3    /goo = g1, v1     <- a state that never existed
-```
+![Fuzzy snapshot timeline: the scan reads /goo at g1, three transactions update /foo to f2, /goo to g2, and /foo to f3, then the scan reads /foo at f3. The snapshot combines f3 and g1.](/assets/img/zookeeper/fuzzy-snapshot.svg)
 
 After all three transactions, the true state is `/foo = f3, v3` and `/goo = g2, v2`. But the fuzzy snapshot recorded `/foo = f3, v3` and `/goo = g1, v1`, a combination that was never valid at any moment.
 

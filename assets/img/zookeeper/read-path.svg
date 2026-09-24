@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="452" viewBox="0 0 960 452" role="img"><title>ZooKeeper read path</title><rect width="960" height="452" rx="12" fill="#f7f9fb"/>
+<text x="28" y="50" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="bold">ZooKeeper read path</text>
+<rect x="76" y="84" width="808" height="72" rx="9" fill="#eef5fb" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="114" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">1. Client sends a read</text>
+<text x="94" y="142" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">The request goes to the server handling the client’s session.</text>
+<polyline points="480,157 480,177" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480,177 475.6503446588877,167.99552897647322 484.3496553411123,167.99552897647322" fill="#356b98"/>
+<rect x="76" y="178" width="808" height="72" rx="9" fill="#ffffff" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="208" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">2. Server reads its local replica</text>
+<text x="94" y="236" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">The read uses the in-memory data tree.</text>
+<polyline points="480,251 480,271" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480,271 475.6503446588877,261.9955289764732 484.3496553411123,261.9955289764732" fill="#356b98"/>
+<rect x="76" y="272" width="808" height="72" rx="9" fill="#eef5fb" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="94" y="302" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">3. Server replies to the client</text>
+<text x="94" y="330" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">The response carries the zxid of the latest transaction seen by that server.</text>
+<text x="76" y="399" fill="#526575" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="normal">The local replica can lag behind writes committed elsewhere.</text>
+</svg>

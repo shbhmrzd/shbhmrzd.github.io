@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" role="img"><title>Lock with predecessor watches</title><rect width="960" height="500" rx="12" fill="#f7f9fb"/>
+<text x="28" y="50" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="bold">Lock with predecessor watches</text>
+<text x="28" y="89" fill="#356b98" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="normal">Each waiting client watches the preceding znode</text>
+<text x="440" y="130" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold">/zl</text>
+<polyline points="480,138 480,150 170.66666666666666,150 170.66666666666666,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<polyline points="480,138 480,150 480.0,150 480.0,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<polyline points="480,138 480,150 789.3333333333333,150 789.3333333333333,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<rect x="28.0" y="174" width="285.3333333333333" height="152" rx="9" fill="#e7f4ed" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="42.0" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">lock-1</text>
+<text x="42.0" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Client 1 holds lock</text>
+<rect x="337.3333333333333" y="174" width="285.3333333333333" height="152" rx="9" fill="#fff2d9" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="351.3333333333333" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">lock-2</text>
+<text x="351.3333333333333" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Client 2 waits</text>
+<rect x="646.6666666666666" y="174" width="285.3333333333333" height="152" rx="9" fill="#fff2d9" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="660.6666666666666" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">lock-3</text>
+<text x="660.6666666666666" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Client 3 waits</text>
+<polyline points="480.0,328 480.0,350 170.66666666666666,350 170.66666666666666,328" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="170.66666666666666,328 175.01632200777897,337.0044710235268 166.31701132555435,337.0044710235268" fill="#356b98"/>
+<text x="180.66666666666666" y="369" fill="#356b98" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="normal">watches</text>
+<polyline points="789.3333333333333,328 789.3333333333333,380 480.0,380 480.0,328" fill="none" stroke="#356b98" stroke-width="2"/>
+<polygon points="480.0,328 484.3496553411123,337.0044710235268 475.6503446588877,337.0044710235268" fill="#356b98"/>
+<text x="490.0" y="399" fill="#356b98" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="normal">watches</text>
+<text x="28" y="436" fill="#526575" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Sequence numbers order the requests. Each client watches only its predecessor.</text>
+<text x="28" y="492" fill="#526575" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="normal">Illustration of the paper’s recipe</text>
+</svg>

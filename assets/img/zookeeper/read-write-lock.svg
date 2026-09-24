@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" role="img"><title>Read/write locks</title><rect width="960" height="500" rx="12" fill="#f7f9fb"/>
+<text x="28" y="50" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="bold">Read/write locks</text>
+<text x="28" y="89" fill="#356b98" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="normal">WL-1 holds the write lock</text>
+<text x="440" y="130" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold">/zl</text>
+<polyline points="480,138 480,150 132.0,150 132.0,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<polyline points="480,138 480,150 364.0,150 364.0,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<polyline points="480,138 480,150 596.0,150 596.0,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<polyline points="480,138 480,150 828.0,150 828.0,172" fill="none" stroke="#9aabb8" stroke-width="2"/>
+<rect x="28.0" y="174" width="208.0" height="152" rx="9" fill="#e7f4ed" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="42.0" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">WL-1</text>
+<text x="42.0" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Writing</text>
+<rect x="260.0" y="174" width="208.0" height="152" rx="9" fill="#fff2d9" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="274.0" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">RL-2</text>
+<text x="274.0" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Watches WL-1</text>
+<rect x="492.0" y="174" width="208.0" height="152" rx="9" fill="#fff2d9" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="506.0" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">RL-3</text>
+<text x="506.0" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Watches WL-1</text>
+<rect x="724.0" y="174" width="208.0" height="152" rx="9" fill="#fff2d9" stroke="#9aabb8" stroke-width="1.5"/>
+<text x="738.0" y="211" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="bold">WL-4</text>
+<text x="738.0" y="249" fill="#243746" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Watches RL-3</text>
+<text x="28" y="436" fill="#526575" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="normal">Readers wait for earlier writers. A writer waits for every earlier request.</text>
+<text x="28" y="492" fill="#526575" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="normal">Illustration of the paper’s recipe</text>
+</svg>
