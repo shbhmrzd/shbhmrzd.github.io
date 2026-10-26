@@ -1,0 +1,25 @@
+{%- comment -%}
+Certificate chain diagram, drawn from the root down.
+  {% include chain-diagram.html variant="hierarchy" %}  root, intermediate and site layers
+  {% include chain-diagram.html variant="blog" %}       the real chain shbhmrzd.github.io sent on 23 Oct 2026
+Styles are in css/override.css under "Certificate chain diagram".
+{%- endcomment -%}
+{%- if include.variant == "blog" -%}
+<figure class="cad" aria-label="Certificate chain for shbhmrzd.github.io, from the root down">
+<div class="cad-node cad-root cad-local"><div class="cad-head"><span class="cad-name">ISRG Root X1</span><span class="cad-tag">in your trust store</span></div><p class="cad-desc">Already on your device. The server does not send it.</p></div>
+<div class="cad-link"><span>signs</span></div>
+<div class="cad-node cad-root"><div class="cad-head"><span class="cad-name">ISRG Root YR</span><span class="cad-tag">sent by the server</span></div><p class="cad-desc">Let's Encrypt's newer root. This copy is signed by X1, so devices that only trust X1 still accept it.</p></div>
+<div class="cad-link"><span>signs</span></div>
+<div class="cad-node cad-inter"><div class="cad-head"><span class="cad-name">Let's Encrypt YR1</span><span class="cad-tag">sent by the server</span></div><p class="cad-desc">The intermediate that signs website certificates day to day.</p></div>
+<div class="cad-link"><span>signs</span></div>
+<div class="cad-node cad-leaf"><div class="cad-head"><span class="cad-name">*.github.io</span><span class="cad-tag">sent by the server</span></div><p class="cad-desc">Covers shbhmrzd.github.io. Valid from 30 September to 29 December 2026.</p></div>
+</figure>
+{%- else -%}
+<figure class="cad" aria-label="Root CA signs the intermediate CA, which signs the website certificate">
+<div class="cad-node cad-root"><div class="cad-head"><span class="cad-name">Root CA</span><span class="cad-tag">key kept offline</span></div><p class="cad-desc">Its certificate ships in browsers and operating systems, in the trust store. Only used now and then to sign intermediates.</p></div>
+<div class="cad-link"><span>signs</span></div>
+<div class="cad-node cad-inter"><div class="cad-head"><span class="cad-name">Intermediate CA</span><span class="cad-tag">key in an HSM</span></div><p class="cad-desc">Signs website certificates every day. All eight of eMudhra's weak keys were at this layer.</p></div>
+<div class="cad-link"><span>signs</span></div>
+<div class="cad-node cad-leaf"><div class="cad-head"><span class="cad-name">myblog.com</span><span class="cad-tag">key on your server</span></div><p class="cad-desc">Sent to every visitor, whose browser checks the signatures back up to the root.</p></div>
+</figure>
+{%- endif -%}

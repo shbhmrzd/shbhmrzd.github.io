@@ -1955,3 +1955,95 @@ em {
 .post-content > p:first-child img[src*="hitscounter"] {
   border-radius: var(--radius-sm);
 }
+
+/* --- Certificate chain diagram (_includes/chain-diagram.html) --- */
+.cad {
+  margin: 1.6em 0;
+  padding: 0;
+  max-width: 560px;
+}
+
+.cad-node {
+  position: relative;
+  padding: 0.75em 1em 0.8em 1.15em;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cad-color);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.cad-root  { --cad-color: var(--accent-secondary); --cad-tag-bg: var(--accent-secondary-light); --cad-tag-text: var(--accent-secondary-text); }
+.cad-inter { --cad-color: var(--accent);           --cad-tag-bg: var(--accent-light);           --cad-tag-text: var(--heading-accent); }
+.cad-leaf  { --cad-color: var(--accent-tertiary);  --cad-tag-bg: var(--accent-tertiary-light);  --cad-tag-text: var(--accent-tertiary-text); }
+
+/* a certificate that is already on the device rather than sent over the network */
+.cad-local {
+  border-style: dashed;
+  border-color: var(--text-muted);
+  border-left-color: var(--cad-color);
+  border-left-style: solid;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cad-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3em 0.8em;
+}
+
+.cad-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.cad-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.15em 0.65em;
+  border-radius: 999px;
+  background: var(--cad-tag-bg);
+  color: var(--cad-tag-text);
+  white-space: nowrap;
+}
+
+.post-content .cad-desc,
+.cad-desc {
+  margin: 0.35em 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* the "signs" connector between two layers */
+.cad-link {
+  position: relative;
+  height: 40px;
+  margin-left: 26px;
+  border-left: 2px solid var(--text-muted);
+}
+
+.cad-link::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  bottom: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--text-muted);
+}
+
+.cad-link span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-55%);
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
