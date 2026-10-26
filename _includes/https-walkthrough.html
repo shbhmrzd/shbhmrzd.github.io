@@ -1,0 +1,80 @@
+<div class="hw" id="hw">
+<style>
+.hw{border:1px solid #e3e3e3;border-radius:10px;padding:18px 20px;margin:24px 0;font-size:16px;line-height:1.6}
+.hw button{font:inherit;font-size:14px;padding:6px 12px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#222;cursor:pointer}
+.hw button:hover{background:#f5f5f5}
+.hw button.hw-on{background:#e6f1fb;border-color:#378add;color:#0c447c}
+.hw-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.hw-chip{flex:1;min-width:90px;text-align:center;font-size:13px;padding:8px 6px;border-radius:6px;border:1px solid #e3e3e3;color:#666}
+.hw-chip.hw-hl{background:#e6f1fb;border-color:#378add;color:#0c447c}
+.hw-chip.hw-bad{background:#fcebeb;border-color:#e24b4a;color:#791f1f}
+.hw-sep{color:#aaa}
+.hw-dots span{display:inline-block;width:8px;height:8px;border-radius:50%;background:#d3d1c7;margin-right:6px}
+.hw-dots span.hw-cur{background:#378add}
+.hw h4{margin:10px 0 6px;font-size:17px}
+.hw-wire{font-family:Menlo,Consolas,monospace;font-size:13px;background:#f6f6f6;border-radius:6px;padding:10px 12px;white-space:pre-wrap;line-height:1.6;margin:0}
+.hw-res{display:inline-block;font-size:14px;padding:5px 10px;border-radius:6px;margin-top:10px}
+.hw-ok{background:#eaf3de;color:#27500a}
+.hw-no{background:#fcebeb;color:#791f1f}
+</style>
+<div style="font-size:13px;color:#888;margin-bottom:10px">A simplified TLS 1.3 handshake</div>
+<div class="hw-row"><span style="font-size:14px;color:#666">Scenario</span><button type="button" id="hw-mN">Normal visit</button><button type="button" id="hw-mA">Hypothetical attack before the block</button></div>
+<div class="hw-row"><div class="hw-chip" id="hw-c0">Browser</div><span class="hw-sep">&#8644;</span><div class="hw-chip" id="hw-c1">Site certificate</div><span class="hw-sep">&larr;</span><div class="hw-chip" id="hw-c2">Intermediate</div><span class="hw-sep">&larr;</span><div class="hw-chip" id="hw-c3">Root in trust store</div></div>
+<div class="hw-dots" id="hw-dots"></div>
+<h4 id="hw-t"></h4>
+<p id="hw-b" style="margin:0 0 12px"></p>
+<pre class="hw-wire" id="hw-w"></pre>
+<div id="hw-r"></div>
+<div class="hw-row" style="margin:16px 0 0"><button type="button" id="hw-prev">Back</button><button type="button" id="hw-next">Next</button></div>
+<script>
+(function(){
+var S=[
+{t:"You type the address",hl:[0],
+n:["The browser looks up shbhmrzd.github.io in DNS and gets the IP address of a GitHub server. No certificates yet. At this point the browser has an address, but no proof that whoever answers there is really GitHub.","DNS lookup  shbhmrzd.github.io  ->  a GitHub IP\nTCP connect to port 443",""],
+a:["Same lookup, but the attacker sits on the network path (public Wi-Fi, a compromised router, a malicious ISP). The connection goes to the attacker's machine instead of GitHub. Nothing looks different yet.","DNS lookup  shbhmrzd.github.io  ->  attacker's IP\nTCP connect to port 443",""]},
+{t:"Browser says hello",hl:[0],
+n:["The browser starts TLS by sending a ClientHello: which site it wants, which TLS versions and ciphers it supports, a fresh random value for this session, and its half of the key exchange that the two sides will use to agree on a session key.","ClientHello\n  server name: shbhmrzd.github.io\n  versions:    TLS 1.3, 1.2\n  random:      32 fresh random bytes\n  key share:   browser's half of the key exchange",""],
+a:["Identical. The browser has no idea who it is talking to, so it sends the same hello to the attacker.","ClientHello\n  server name: shbhmrzd.github.io\n  ...",""]},
+{t:"Server sends its certificate chain",hl:[1,2],
+n:["GitHub's server replies with three certificates. Certificates are public documents, anyone can download and copy them, so the browser cannot trust them just because they arrived. This is the real chain this blog sent on 23 October 2026.","Certificate 1  CN=*.github.io         issued by Let's Encrypt YR1\n               valid Sep 30 to Dec 29 2026\nCertificate 2  CN=YR1 (Let's Encrypt) issued by ISRG Root YR\nCertificate 3  CN=Root YR             issued by ISRG Root X1",""],
+a:["The attacker sends a certificate they wrote themselves: \"this is shbhmrzd.github.io, and here is my public key\". They signed it with eMudhra's G3B intermediate key, which is just the number 156, and attached the real G3B certificate, which is public.","Certificate 1  CN=shbhmrzd.github.io issued by EM DV TLS CA - G3B\n               public key = attacker's key\nCertificate 2  CN=EM DV TLS CA - G3B issued by emSign Root TLS CA - G3",""]},
+{t:"Check signature 1: the site certificate",hl:[1,2],
+n:["Let's Encrypt hashed the certificate body (1,075 bytes) and signed the hash with YR1's private key. The browser hashes the same body itself and checks the 256 byte signature using the public key in certificate 2.","hash(body of cert 1)       = fff036fe...\ncheck(signature, hash, YR1 public key)\n\nIf 'github.io' is edited to 'evilxx.io':\n  hash changes -> check fails","VALID, and INVALID after the one word edit"],
+a:["The browser runs exactly the same check, using the G3B public key from certificate 2. The forged certificate really was signed with G3B's private key, because the attacker has it. The math cannot tell that nobody checked who owns the domain.","check(signature, hash, G3B public key)","VALID, the forged certificate passes"]},
+{t:"Check signature 2: up to a root",hl:[2,3],
+n:["Next the browser checks that YR1 was signed by Root YR, and that Root YR was signed by ISRG Root X1. Root X1 is already on the device, shipped in the browser or OS trust store. The chain ends at something the browser trusted before this connection started.","check(YR1 cert,     Root YR public key) -> VALID\ncheck(Root YR cert, ISRG Root X1 key)   -> VALID\nISRG Root X1 is in the trust store      -> trusted","Chain OK"],
+a:["G3B really was signed by eMudhra's root, and browsers trusted that root through emSign ECC Root CA - G3 until October 2026. So the chain ends at a trusted root, exactly like the normal case. This is why one weak CA puts every domain at risk.","check(G3B cert, emSign root key)        -> VALID\nemSign ECC Root CA - G3 in trust store? -> yes, before October 2026","Chain OK, and this is the hole"]},
+{t:"Other checks",hl:[1],
+n:["The browser also checks that the name matches (*.github.io covers shbhmrzd.github.io), that today is between the start and expiry dates, that the certificate is not on the browser's list of revoked certificates, and, in browsers like Chrome, that it was published in the CT logs.","name   shbhmrzd.github.io matches *.github.io\ndates  Oct 23 is between Sep 30 and Dec 29\nCT     proof of logging attached","All pass"],
+a:["The name and dates pass because the attacker wrote them. CT does not stop this either. The attacker can submit the forged certificate to the CT logs themselves and get the proof browsers ask for. What CT does is make the forgery public, so the real owner or anyone watching the logs can spot it. A script or device that skips CT does not even need that step. In the real incident, Google says no certificates under these intermediates were logged before it blocked them.","name   matches (attacker wrote it)\ndates  valid (attacker chose them)\nCT     attacker logs it -> passes, but now public\n       clients that skip CT -> accept","Pass, but CT leaves a public trail"]},
+{t:"Server proves it holds the key",hl:[0,1],
+n:["Anyone can copy certificate 1, so the server also has to prove it holds the matching private key. It signs a hash of the handshake so far, including the browser's fresh random value, with the *.github.io private key. The browser checks it with the public key in certificate 1.","CertificateVerify\n  signature over the handshake so far\n  check with public key in cert 1 -> VALID","The server really is GitHub"],
+a:["The attacker passes this too. Certificate 1 contains the attacker's own public key, so they hold the matching private key and can sign the handshake. Every check that relies on a signature has now passed.","CertificateVerify\n  signed with the attacker's private key\n  check with public key in forged cert -> VALID","Attacker passes"]},
+{t:"Padlock, encrypted page",hl:[0],
+n:["Both sides derive the same session key from the values they swapped in the hello messages, and the page arrives encrypted. All of the certificate work happens in these first few messages, and it answers one question: is this really shbhmrzd.github.io?","session key derived on both sides\nGET /  -> encrypted HTML","Padlock shown"],
+a:["The browser shows a padlock, but the encrypted connection goes to the attacker. They can read and change the page before passing it on to GitHub. That is what a leaked intermediate key allows, and why browsers removed eMudhra's root.","session key shared with the attacker\nattacker reads or edits, then forwards to GitHub","Padlock shown, connection compromised"]}
+];
+var i=0,m=0;
+function el(id){return document.getElementById(id)}
+function render(){
+var s=S[i],c=m?s.a:s.n,bad=m&&i>=3;
+el("hw-t").textContent=(i+1)+" of "+S.length+". "+s.t;
+el("hw-b").textContent=c[0];
+el("hw-w").textContent=c[1];
+el("hw-r").innerHTML=c[2]?'<span class="hw-res '+(bad?"hw-no":"hw-ok")+'"></span>':"";
+if(c[2])el("hw-r").firstChild.textContent=c[2];
+for(var k=0;k<4;k++){var on=s.hl.indexOf(k)>=0;el("hw-c"+k).className="hw-chip"+(on?((m&&k>0&&k<3&&i>=2)?" hw-bad":" hw-hl"):"")}
+el("hw-c1").textContent=(m&&i>=2)?"Forged site cert":"Site certificate";
+el("hw-c2").textContent=(m&&i>=2)?"G3B (key 156)":"Intermediate";
+el("hw-mN").className=m?"":"hw-on";el("hw-mA").className=m?"hw-on":"";
+var d="";for(var j=0;j<S.length;j++)d+='<span class="'+(j===i?"hw-cur":"")+'"></span>';el("hw-dots").innerHTML=d;
+}
+el("hw-mN").onclick=function(){m=0;render()};
+el("hw-mA").onclick=function(){m=1;render()};
+el("hw-prev").onclick=function(){i=(i-1+S.length)%S.length;render()};
+el("hw-next").onclick=function(){i=(i+1)%S.length;render()};
+render();
+})();
+</script>
+<noscript><p>This walkthrough needs JavaScript. The same steps are described in the text above.</p></noscript>
+</div>
