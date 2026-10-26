@@ -2,11 +2,11 @@
 layout: post
 title: "eMudhra: A CA Private Key Was Just 156"
 date: 2026-10-23
-categories: [security, backend]
+categories: [systems, security, incident-analysis]
 tags: [security, pki, tls, certificates, elliptic-curve, incident]
 ---
 
-![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fsecurity%2Fbackend%2F2026%2F10%2F23%2Femudhra-weak-ca-keys.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
+![Views](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fshbhmrzd.github.io%2Fsystems%2Fsecurity%2Fincident-analysis%2F2026%2F10%2F23%2Femudhra-weak-ca-keys.html&label=Views&icon=eye&color=%23007ec6&style=flat-square)
 
 # eMudhra: A CA Private Key Was Just 156
 
